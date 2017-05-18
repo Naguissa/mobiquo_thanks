@@ -1,0 +1,159 @@
+<?php
+
+defined('MBQ_IN_IT') or exit;
+
+MbqMain::$oClk->includeClass('MbqBaseWrEtForum');
+
+/**
+ * forum write class
+ */
+Class MbqWrEtForum extends MbqBaseWrEtForum {
+
+    public function __construct() {
+    }
+    /**
+     * subscribe forum
+     */
+    public function subscribeForum($oMbqEtForum, $receiveEmail) {
+        global $db, $user, $config, $auth, $request_params;
+
+        $user->setup('viewforum');
+
+
+        $forum_id = $oMbqEtForum->forumId->oriValue;
+        $forum_data = $oMbqEtForum->mbqBind;
+        if (!$forum_id) trigger_error('NO_FORUM');
+        $user_id = $user->data['user_id'];
+        $s_result = false;
+
+        if (($config['email_enable'] || $config['jab_enable']) && $config['allow_forum_notify'] && $forum_data['forum_type'] == FORUM_POST && $auth->acl_get('f_subscribe', $forum_id))
+        {
+            $notify_status = (isset($forum_data['notify_status'])) ? $forum_data['notify_status'] : 'unset';
+
+            $table_sql = FORUMS_WATCH_TABLE;
+            $where_sql = 'forum_id';
+            $match_id = $forum_id;
+
+            // Is user watching this thread?
+            if ($user_id != ANONYMOUS)
+            {
+                if ($notify_status == 'unset')
+                {
+                    $sql = "SELECT notify_status
+                    FROM $table_sql
+                    WHERE $where_sql = $match_id
+                        AND user_id = $user_id";
+                    $result = $db->sql_query($sql);
+
+                    $notify_status = ($row = $db->sql_fetchrow($result)) ? $row['notify_status'] : NULL;
+                    $db->sql_freeresult($result);
+                }
+
+                if (!is_null($notify_status) && $notify_status !== '')
+                {
+                    if ($notify_status)
+                    {
+                        $sql = 'UPDATE ' . $table_sql . "
+                        SET notify_status = 0
+                        WHERE $where_sql = $match_id
+                            AND user_id = $user_id";
+                        $db->sql_query($sql);
+                    }
+                }
+                else
+                {
+                    $sql = 'INSERT INTO ' . $table_sql . " (user_id, $where_sql, notify_status)
+                    VALUES ($user_id, $match_id, 0)";
+                    $db->sql_query($sql);
+                }
+                $s_result = true;
+            }
+            else
+            {
+                return getSystemString('LOGIN_VIEWFORUM');
+            }
+        }
+        else
+        {
+            $s_result = false;
+        }
+
+        return $s_result;
+    }
+
+    /**
+     * unsubscribe forum
+     */
+    public function unsubscribeForum($oMbqEtForum) {
+        global $db, $user, $config, $auth, $request_params;
+
+        $user->setup('viewforum');
+
+        $forum_id = $oMbqEtForum->forumId->oriValue;
+        $forum_data = $oMbqEtForum->mbqBind;
+        if (!$forum_id) trigger_error('NO_FORUM');
+        $user_id = $user->data['user_id'];
+
+        $s_result = false;
+        if (($config['email_enable'] || $config['jab_enable']) && $config['allow_forum_notify'] && $forum_data['forum_type'] == FORUM_POST && $auth->acl_get('f_subscribe', $forum_id))
+        {
+            $notify_status = (isset($forum_data['notify_status'])) ? $forum_data['notify_status'] : 'unset';
+
+            $table_sql = FORUMS_WATCH_TABLE;
+            $where_sql = 'forum_id';
+            $match_id = $forum_id;
+
+            // Is user watching this thread?
+            if ($user_id != ANONYMOUS)
+            {
+                $can_watch = true;
+
+                if ($notify_status == 'unset')
+                {
+                    $sql = "SELECT notify_status
+                    FROM $table_sql
+                    WHERE $where_sql = $match_id
+                        AND user_id = $user_id";
+                    $result = $db->sql_query($sql);
+
+                    $notify_status = ($row = $db->sql_fetchrow($result)) ? $row['notify_status'] : NULL;
+                    $db->sql_freeresult($result);
+                }
+
+                if (!is_null($notify_status) && $notify_status !== '')
+                {
+                    $sql = 'DELETE FROM ' . $table_sql . "
+                    WHERE $where_sql = $match_id
+                        AND user_id = $user_id";
+                    $db->sql_query($sql);
+                }
+
+                $s_result = true;
+            }
+            else
+            {
+                return getSystemString('LOGIN_VIEWFORUM');
+            }
+        }
+        else
+        {
+            $s_result = false;
+        }
+
+
+        return $s_result;
+    }
+
+    public function markForumRead($oMbqEtForum){
+        if($oMbqEtForum != null)
+        {
+            markread('topics', $oMbqEtForum->forumId->oriValue);
+        }
+        else
+        {
+            markread('all');
+        }
+        return true;
+    }
+
+}
