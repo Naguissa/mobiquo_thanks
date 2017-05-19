@@ -31,7 +31,6 @@ MbqMain::init(); // frame init
 MbqMain::input(); // handle input data
 require_once(MBQ_PATH . 'IncludeBeforeMbqAppEnv.php');
 MbqMain::initAppEnv(); // application environment init
-file_put_contents("/www/prod/foroelectro.net/mobiquo/mydebug.txt", "\n\n------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\nMBQ command: " . MbqMain::getCurrentCmd() . "\n\n");
 @ ob_start();
 TT_InitErrorLog();
 MbqMain::action(); // main program handle
