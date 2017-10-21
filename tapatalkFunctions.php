@@ -103,13 +103,15 @@ function get_short_content($post_id, $length = 200)
     $post_id = intval($post_id);
     if (empty($post_id)) return '';
 
-    $sql = 'SELECT post_text,bbcode_uid
+    $sql = 'SELECT post_text,bbcode_uid,bbcode_bitfield
             FROM ' . POSTS_TABLE . '
             WHERE post_id = ' . $post_id;
     $result = $db->sql_query($sql);
     $row = $db->sql_fetchrow();
     $db->sql_freeresult($result);
-    $post_text = tapatalk_process_bbcode($row['post_text'], $row['bbcode_uid']);
+    $message = preg_replace('/<URL url=\"(.*?)\">(.*?)<\/URL>/si', '[url="$1"]$2[/url]', $row['post_text']);
+    $message =  generate_text_for_edit($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
+    $post_text = tapatalk_process_bbcode($message['text'], $row['bbcode_uid']);
     return process_short_content($post_text, 200);
 }
 
@@ -160,96 +162,138 @@ function post_html_clean($str, $returnHtml = false)
 {
 
     global $phpbb_root_path, $phpbb_home, $mobiquo_config,$config;
-
-    $search = array(
-        "/<b>(.*?)<\/b>/si",
-        "/<i>(.*?)<\/i>/si",
-        "/<u>(.*?)<\/u>/si",
-        "/<strong>(.*?)<\/strong>/si",
-        "/<em>(.*?)<\/em>/si",
-        "/<img .*?src=\"(.*?)\".*?\/?>/si",
-         "/<br\s*\/?>|<\/cite>|<\/dt>|<\/dd>/si",
-        "/<object .*?data=\"(http:\/\/www\.youtube\.com\/.*?)\" .*?>.*?<\/object>/si",
-        "/<object .*?data=\"(http:\/\/video\.google\.com\/.*?)\" .*?>.*?<\/object>/si",
-        "/<iframe .*?src=\"(http.*?)\" .*?>.*?<\/iframe>/si",
-        "/<script( [^>]*)?>([^<]*?)<\/script>/si",
-        "/<param name=\"movie\" value=\"(.*?)\" \/>/si"
-    );
-
-    $replace = array(
-        '[b]$1[/b]',
-        '[i]$1[/i]',
-        '[u]$1[/u]',
-	'[b]$1[/b]',
-        '[i]$1[/i]',
-        '[img]$1[/img]',
-        "\n",
-        '[url=$1]YouTube Video[/url]',
-        '[url=$1]Google Video[/url]',
-        '[url=$1]$1[/url]',
-        '',
-        '[url=$1]Flash Video[/url]',
-    );
-
-    //$str = preg_replace('/\n|\r/si', '', $str);
-    $str = preg_replace('/>\s+</si', '><', $str);
-    // remove smile
-    /*
-    $str = preg_replace('/<img [^>]*?src=\"[^"]*?images\/smilies\/[^"]*?\"[^>]*?alt=\"([^"]*?)\"[^>]*?\/?>/', ' $1 ', $str);
-    $str = preg_replace('/<img [^>]*?alt=\"([^"]*?)\"[^>]*?src=\"[^"]*?images\/smilies\/[^"]*?\"[^>]*?\/?>/', ' $1 ', $str);
-    */
-    $str = censor_text($str);
-	$str = bbcode_nl2br($str);
-    $str = preg_replace_callback('#<!\-\- s(.*?) \-\-><img src="\{SMILIES_PATH\}\/([^"]*?)\".*?\/><!\-\- s\1 \-\->#', function ($match) {
-        global $phpbb_root_path, $phpEx, $config;
-        $url = $match[2];
-
-        if(!function_exists("generate_board_url"))
-        {
-            require_once($phpbb_root_path. '/includes/functions.' . $phpEx);
-        }
-        $url =generate_board_url() . '/' . $config["smilies_path"] . '/' . $url;
-        return '###img src="'. $url .'?ttinline=true"###';
-    }, $str);
-
-    $str = preg_replace('/<null.*?\/>/', '', $str);
-
-    $str = preg_replace($search, $replace, $str);
-    $str = preg_replace_callback("/<a .*?href=\"(.*?)\"(.*?)?>(.*?)<\/a>/si", function ($match) { return '[url='.url_encode($match[1]).']' . $match[3] . '[/url]';}, $str);
-
-
-    $str = strip_tags($str);
-
-    $str = preg_replace_callback('/\[code\](.*?)\[\/code\]/si', function ($match) { return '[code]'.base64_encode($match[1]).'[/code]';}, $str);
-    $str = html_entity_decode($str, ENT_QUOTES, 'UTF-8');
-
-    // remove attach icon image
-    $str = preg_replace('/\[img\][^\[\]]+icon_topic_attach\.gif\[\/img\]/si', '', $str);
-
-    // change relative path to absolute URL and encode url
-    $str = preg_replace_callback('/\[img\](.*?)\[\/img\]/si', function ($match) { return '[img]'.url_encode($match[1]).'[/img]';}, $str);
-
-    $str = preg_replace('/\[\/img\]\s*/si', "[/img]\n", $str);
-
-    $str = preg_replace('/\[\/img\]\s+\[img\]/si', '[/img][img]', $str);
-
-    // remove link on img
-    //$str = preg_replace('/\[url=[^\]]*?\]\s*(\[img\].*?\[\/img\])\s*\[\/url\]/si', '$1', $str);
-
-    // change url to image resource to img bbcode
-    $str = preg_replace('/\[url\](http[^\[\]]+\.(jpg|png|bmp|gif))\[\/url\]/si', '[img]$1[/img]', $str);
-    $str = preg_replace('/\[url=(http[^\]]+\.(jpg|png|bmp|gif))\]([^\[\]]+)\[\/url\]/si', '[img]$1[/img]', $str);
-
-
-
-    // cut quote content to 100 charactors
-    if (isset($mobiquo_config['shorten_quote']) && $mobiquo_config['shorten_quote'])
+    if($returnHtml)
     {
-        $str = cut_quote($str, 100);
+        if($returnHtml === 2)
+        {
+            $str = preg_replace('/\[center\]([^\[]*)?\[\/center\]/si', '<div style="text-align:center">$1</div>', $str);
+        }
+        else
+        {
+            $str = preg_replace('/\[center\]([^\[]*)?\[\/center\]/si', '<center>$1</center>', $str);
+        }
+        $str = preg_replace_callback('/\[list(=1|=a)?\](.*?)\[\/list\]/is', function($matches){
+            $points = explode('[*]', $matches[2]);
+            $points = array_slice($points, 1);
+            $points = '<li>' . implode('</li><li>', $points) . '</li>';
+            $tag = 'ul';
+            if($matches[1]== "=1")
+            {
+                $tag = 'ol';
+            }
+            return '<' . $tag . '>' . $points . '</' . $tag . '><br />';
+            }, $str);
+        $str = censor_text($str);
+        $str = bbcode_nl2br($str);
+        $str = preg_replace_callback('#\[color=(\#[\da-fA-F]{3}|\#[\da-fA-F]{6}|[A-Za-z]{1,20}|rgb\(\d{1,3}, ?\d{1,3}, ?\d{1,3}\))\](.*?)\[/color\]#si', function ($match) { return mobi_color_convert($match[1], $match[2]);}, $str);
+        $str = preg_replace('/\[font=[^\]]+\]/si', '', $str);
+        $str = preg_replace('/\[\/font]/si', '', $str);
+        $str = preg_replace('/\[size=[^\]]+\]/si', '', $str);
+        $str = preg_replace('/\[\/size]/si', '', $str);
+        $str = preg_replace('/\[color=[^\]]+\]/si', '', $str);
+        $str = preg_replace('/\[\/color]/si', '', $str);
     }
+    else
+    {
+        $search = array(
+            "/<b>(.*?)<\/b>/si",
+            "/<i>(.*?)<\/i>/si",
+            "/<u>(.*?)<\/u>/si",
+            "/<strong>(.*?)<\/strong>/si",
+            "/<em>(.*?)<\/em>/si",
+            "/<img .*?src=\"(.*?)\".*?\/?>/si",
+             "/<br\s*\/?>|<\/cite>|<\/dt>|<\/dd>/si",
+            "/<object .*?data=\"(http:\/\/www\.youtube\.com\/.*?)\" .*?>.*?<\/object>/si",
+            "/<object .*?data=\"(http:\/\/video\.google\.com\/.*?)\" .*?>.*?<\/object>/si",
+            "/<iframe .*?src=\"(http.*?)\" .*?>.*?<\/iframe>/si",
+            "/<script( [^>]*)?>([^<]*?)<\/script>/si",
+            "/<param name=\"movie\" value=\"(.*?)\" \/>/si"
+        );
 
-    $str = parse_bbcode($str, $returnHtml);
-    $str = preg_replace('/###img .*?src=\"(.*?)\".*?\/?###/si', '<img src="$1"/>', $str);
+        $replace = array(
+            '[b]$1[/b]',
+            '[i]$1[/i]',
+            '[u]$1[/u]',
+        '[b]$1[/b]',
+            '[i]$1[/i]',
+            '[img]$1[/img]',
+            "\n",
+            '[url=$1]YouTube Video[/url]',
+            '[url=$1]Google Video[/url]',
+            '[url=$1]$1[/url]',
+            '',
+            '[url=$1]Flash Video[/url]',
+        );
+
+        //$str = preg_replace('/\n|\r/si', '', $str);
+        $str = preg_replace('/>\s+</si', '><', $str);
+        // remove smile
+        /*
+        $str = preg_replace('/<img [^>]*?src=\"[^"]*?images\/smilies\/[^"]*?\"[^>]*?alt=\"([^"]*?)\"[^>]*?\/?>/', ' $1 ', $str);
+        $str = preg_replace('/<img [^>]*?alt=\"([^"]*?)\"[^>]*?src=\"[^"]*?images\/smilies\/[^"]*?\"[^>]*?\/?>/', ' $1 ', $str);
+         */
+        $str = censor_text($str);
+        $str = bbcode_nl2br($str);
+        $str = preg_replace_callback('#<!\-\- s(.*?) \-\-><img src="\{$config["smilies_path"]\}\/([^"]*?)\".*?\/><!\-\- s\1 \-\->#', function ($match) {
+            global $phpbb_root_path, $phpEx, $config;
+            $url = $match[2];
+
+            if(!function_exists("generate_board_url"))
+            {
+                require_once($phpbb_root_path. '/includes/functions.' . $phpEx);
+            }
+            $url =generate_board_url() . '/' . $config["smilies_path"] . '/' . $url;
+            return '###img src="'. $url .'?ttinline=true"###';
+        }, $str);
+        $str = preg_replace_callback('/\[img\]' . str_replace(array('/','.'), array('\/','\.'), $config["smilies_path"]) . '\/(.*?)\[\/img\]/i', function ($match) {
+            global $phpbb_root_path, $phpEx, $config;
+            $url = $match[1];
+
+            if(!function_exists("generate_board_url"))
+            {
+                require_once($phpbb_root_path. '/includes/functions.' . $phpEx);
+            }
+            $url =generate_board_url() . '/' . $config["smilies_path"] . '/' . $url;
+            return '###img src="'. $url .'?ttinline=true"###';
+        }, $str);
+        $str = preg_replace('/<null.*?\/>/', '', $str);
+
+        $str = preg_replace($search, $replace, $str);
+        $str = preg_replace_callback("/<a .*?href=\"(.*?)\"(.*?)?>(.*?)<\/a>/si", function ($match) { return '[url='.url_encode($match[1]).']' . $match[3] . '[/url]';}, $str);
+
+
+        $str = strip_tags($str);
+
+        $str = preg_replace_callback('/\[code\](.*?)\[\/code\]/si', function ($match) { return '[code]'.base64_encode($match[1]).'[/code]';}, $str);
+        $str = html_entity_decode($str, ENT_QUOTES, 'UTF-8');
+
+        // remove attach icon image
+        $str = preg_replace('/\[img\][^\[\]]+icon_topic_attach\.gif\[\/img\]/si', '', $str);
+
+        // change relative path to absolute URL and encode url
+        $str = preg_replace_callback('/\[img\](.*?)\[\/img\]/si', function ($match) { return '[img]'.url_encode($match[1]).'[/img]';}, $str);
+
+        $str = preg_replace('/\[\/img\]\s*/si', "[/img]\n", $str);
+
+        $str = preg_replace('/\[\/img\]\s+\[img\]/si', '[/img][img]', $str);
+
+        // remove link on img
+        //$str = preg_replace('/\[url=[^\]]*?\]\s*(\[img\].*?\[\/img\])\s*\[\/url\]/si', '$1', $str);
+
+        // change url to image resource to img bbcode
+        $str = preg_replace('/\[url\](http[^\[\]]+\.(jpg|png|bmp|gif))\[\/url\]/si', '[img]$1[/img]', $str);
+        $str = preg_replace('/\[url=(http[^\]]+\.(jpg|png|bmp|gif))\]([^\[\]]+)\[\/url\]/si', '[img]$1[/img]', $str);
+        $str = preg_replace('/\[font=[^\]]*\]([^\]]*)?\[\/font\]/si', '$1', $str);
+
+        // cut quote content to 100 charactors
+        if (isset($mobiquo_config['shorten_quote']) && $mobiquo_config['shorten_quote'])
+        {
+            $str = cut_quote($str, 100);
+        }
+
+        $str = parse_bbcode($str, $returnHtml);
+        $str = preg_replace('/###img .*?src=\"(.*?)\".*?\/?###/si', '<img src="$1"/>', $str);
+    }
     return $str;
 }
 
@@ -387,7 +431,10 @@ function tapatalk_process_bbcode($message, $uid)
     global $user,$config, $phpbb_container;
 
     $message = str_replace("&quot;", '"', $message);
-    $message = preg_replace('/:'.$uid.'/si', '', $message);
+    if(!empty($uid))
+    {
+        $message = preg_replace('/:'.$uid.'/si', '', $message);
+    }
 
     //add custom
     if(class_exists('MbqMain') && MbqMain::$Cache->Exists('Config','tapatalk_custom_replace'))
@@ -474,6 +521,7 @@ function tapatalk_process_bbcode($message, $uid)
     $message = preg_replace('/\[flash(.*?)\](.*?)\[\/flash(.*?)\]/si', '[url=$2]Flash Video[/url]', $message);
     $message = preg_replace('/<iframe .*?src=\"(http.*?)\" .*?>.*?<\/iframe>/si', '[url=$1]$1[/url]', $message);
 
+
     $message = preg_replace('/\n|\r/si', '<br />', $message);
     $message = preg_replace('#\[(b)\](.*?)\[/b\]#si', '<$1>$2</$1>', $message);
     $message = preg_replace('#\[(u)\](.*?)\[/u\]#si', '<$1>$2</$1>', $message);
@@ -485,7 +533,7 @@ function tapatalk_process_bbcode($message, $uid)
 
     // remove attach icon image
     $message = preg_replace('/\[img\][^\[\]]+icon_topic_attach\.gif\[\/img\]/si', '', $message);
-    $message = preg_replace('/\[attachment(.*?)\](.*?)\[\/attachment(.*?)\]/si', '', $message);
+    //$message = preg_replace('/\[attachment(.*?)\](.*?)\[\/attachment(.*?)\]/si', '', $message);
 
     // change url to image resource to img bbcode
     $message = preg_replace('/\[url\](http[^\[\]]+\.(jpg|png|bmp|gif))\[\/url\]/si', '[img]$1[/img]', $message);
@@ -494,7 +542,7 @@ function tapatalk_process_bbcode($message, $uid)
     $message = preg_replace_callback('/\[url\](.*?)\[\/url\]/si', function ($match) { return '[url]'.html_entity_decode($match[1]).'[/url]';}, $message);
     $message = preg_replace_callback('/\[url=(.*)\](.*?)\[\/url\]/si', function ($match) { return '[url='.html_entity_decode($match[1]).']'.$match[2].'[/url]';}, $message);
     $message = preg_replace_callback('/\[code\](.*?)\[\/code\]/si',  function ($match) { return '[code]'.html_entity_decode($match[1]).'[/code]';}, $message);
-
+    $message = preg_replace_callback('/\[img\]\[url=(.*?)\](.*?)\[\/url\]\[\/img\]/si', function ($match) { return '[img]'.html_entity_decode($match[2]).'[/img]';}, $message);
 
     return $message;
 }
@@ -502,10 +550,17 @@ function tt_tapatalk_process_bbcode_quote_callback($matches)
 {
     if(count($matches) > 1)
     {
-        $userid = get_user_id_by_name($matches[1]);
-        if(!empty($userid))
+        if(preg_match('/(\w+) post_id=(\d+) time=(\d+) user_id=(\d+)/i', $matches[1],$submatch))
         {
-            return "[quote uid=".$userid." name=\"".$matches[1]."\" ]";
+            return "[quote uid=".$submatch[4]." name=\"".$submatch[1]."\" post=".$submatch[2]."]";
+        }
+        else
+        {
+            $userid = get_user_id_by_name($matches[1]);
+            if(!empty($userid))
+            {
+                return "[quote uid=".$userid." name=\"".$matches[1]."\" ]";
+            }
         }
     }
     return "[quote]";
@@ -646,7 +701,6 @@ function get_user_avatar_url($avatar, $avatar_type, $ignore_config = false)
 
     }
 }
-
 
 function get_user_id_by_name($username)
 {
@@ -867,7 +921,7 @@ function get_user_avatars($users, $is_username = false)
 
     return $user_avatar;
 }
-
+//returns true if is a system error that we control, false will return that error as mbqalert
 function check_error_status(&$str)
 {
     global $user;
@@ -917,6 +971,15 @@ function check_error_status(&$str)
                 $str = $user->lang['TOPIC_DELETED_SUCCESS'];
                 return true;
             }
+        case 'm_undelete_topic':
+            {
+                if (strpos($str, $user->lang['TOPICS_RESTORED_SUCCESS']) === false && strpos($str, $user->lang['TOPIC_RESTORED_SUCCESS']) === false)
+                    return false;
+                else {
+                    $str = $user->lang['TOPICS_RESTORED_SUCCESS'];
+                    return true;
+                }
+            }
         case 'm_delete_post':
             if (strpos($str, $user->lang['POST_DELETED_SUCCESS']) === false && strpos($str, $user->lang['TOPIC_DELETED_SUCCESS']) === false)
                 return false;
@@ -926,6 +989,15 @@ function check_error_status(&$str)
             } else {
                 $str = $user->lang['TOPIC_DELETED_SUCCESS'];
                 return true;
+            }
+        case 'm_undelete_post':
+            {
+                if (strpos($str, $user->lang['POST_RESTORED_SUCCESS']) === false && strpos($str, $user->lang['POSTS_RESTORED_SUCCESS']) === false)
+                    return false;
+                else {
+                    $str = $user->lang['POSTS_RESTORED_SUCCESS'];
+                    return true;
+                }
             }
         case 'm_move_topic':
             if (strpos($str, $user->lang['TOPIC_MOVED_SUCCESS']) === false && strpos($str, $user->lang['TOPICS_MOVED_SUCCESS']) === false)
@@ -952,17 +1024,15 @@ function check_error_status(&$str)
                 return true;
             }
         case 'm_approve_topic':
-            if (strpos($str, $user->lang['TOPIC_APPROVED_SUCCESS']) === false)
+            if (strpos($str, $user->lang['TOPIC_APPROVED_SUCCESS']) === false  && strpos($str, $user->lang['TOPIC_DISAPPROVED_SUCCESS']) === false)
                 return false;
             else {
-                $str = $user->lang['TOPIC_APPROVED_SUCCESS'];
                 return true;
             }
         case 'm_approve_post':
-            if (strpos($str, $user->lang['POST_APPROVED_SUCCESS']) === false)
+            if (strpos($str, $user->lang['POST_APPROVED_SUCCESS']) === false && strpos($str, $user->lang['POST_DISAPPROVED_SUCCESS']) === false)
                 return false;
             else {
-                $str = $user->lang['POST_APPROVED_SUCCESS'];
                 return true;
             }
         case 'm_ban_user':

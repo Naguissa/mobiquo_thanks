@@ -3,7 +3,9 @@ define('MBQ_PROTOCOL', 'json');   //define is using json protocol,if not defined
 define('IN_MOBIQUO', true);
 define('TT_ROOT', getcwd() . DIRECTORY_SEPARATOR);
 /*START allow cors calls from other domain*/
-header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+if (isset($_SERVER['HTTP_ORIGIN']))
+    header("Access-Control-Allow-Origin: {$_SERVER['HTTP_ORIGIN']}");
+
 header('Access-Control-Allow-Credentials: true');
 header('Access-Control-Max-Age: 1000');
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");

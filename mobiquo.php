@@ -1,14 +1,14 @@
 <?php
-
 if (isset($_GET['welcome'])) {
 	if (!empty($_GET['referer']) && !empty($_REQUEST['SERVER_NAME'])) {
 		$redirectURL = trim($_GET['referer']);
 
-		if (!empty($redirectURL) && (strpos($redirectURL, $_REQUEST['SERVER_NAME']) !== false && strpos($redirectURL, $_REQUEST['SERVER_NAME']) !== false) || strpos($redirectURL, '/') === 0) {
+		if(!empty($redirectURL) && (strpos($redirectURL, $_REQUEST['SERVER_NAME']) !== false && strpos($redirectURL, $_REQUEST['SERVER_NAME']) !== false) || strpos($redirectURL, '/') === 0) {
 			@header('Location: ' . $redirectURL);
 			exit;
 		}
-	} else if (!empty($_GET['board_url'])) {
+	}
+	else if (!empty($_GET['board_url'])) {
 		$boardURL = trim($_GET['board_url']);
 
 		if (!empty($boardURL)) {
@@ -18,8 +18,9 @@ if (isset($_GET['welcome'])) {
 	}
 }
 
-if (!defined('MBQ_PROTOCOL')) {
-	define('MBQ_PROTOCOL', 'xmlrpc');
+if(!defined('MBQ_PROTOCOL'))
+{
+    define('MBQ_PROTOCOL','xmlrpc');
 }
 define('IN_MOBIQUO', true);
 define('TT_ROOT', getcwd() . DIRECTORY_SEPARATOR);
@@ -29,7 +30,7 @@ require_once(MBQ_PATH . '/logger.php');
 TT_InitAccessLog();
 MbqMain::init(); // frame init
 MbqMain::input(); // handle input data
-require_once(MBQ_PATH . 'IncludeBeforeMbqAppEnv.php');
+require_once(MBQ_PATH.'IncludeBeforeMbqAppEnv.php');
 MbqMain::initAppEnv(); // application environment init
 @ ob_start();
 TT_InitErrorLog();

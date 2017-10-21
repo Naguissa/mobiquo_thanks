@@ -395,7 +395,7 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
             }
             $oMbqEtForum = MbqMain::$oClk->newObj('MbqEtForum');
             $oMbqEtForum->forumId->setOriValue($forum_id);
-            $oMbqEtForum->forumName->setOriValue($row['forum_name']);
+            $oMbqEtForum->forumName->setOriValue(html_entity_decode($row['forum_name']));
             $oMbqEtForum->parentId->setOriValue($row['parent_id']);
             if(isset($row['description']))
             {

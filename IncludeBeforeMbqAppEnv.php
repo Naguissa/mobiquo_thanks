@@ -24,7 +24,14 @@ if(getPHPBBVersion() == '3.0')
 	require_once(MBQ_APPEXTENTION_PATH . '/3.0/fake_phpbbcontainer.php');
 }
 else
-{		
-           
+{
+
+}
+
+function TT_addNameValue($name, $value, &$list){
+    $list[] = array(
+        'name'  => $name,
+        'value' => $value
+    );
 }
 //checkPluginInitialized();
