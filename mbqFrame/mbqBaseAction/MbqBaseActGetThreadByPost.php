@@ -70,7 +70,7 @@ Abstract Class MbqBaseActGetThreadByPost extends MbqBaseAct {
                 MbqError::alert('', $aclResult, '', MBQ_ERR_APP);
             }
         } else {
-            MbqError::alert('', "Need valid topic id!", '', MBQ_ERR_APP);
+             MbqError::alert('', "This topic does not exist or you do not have permission to access it!", '', MBQ_ERR_APP);
         }
     }
   

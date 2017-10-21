@@ -39,7 +39,9 @@ Abstract Class MbqBaseActGetInboxStat extends MbqBaseAct {
                 MbqError::alert('', $aclResult, '', MBQ_ERR_APP);
             }
         } elseif (MbqMain::$oMbqConfig->moduleIsEnable('pm')) {
-            $this->data['inbox_unread_count'] = (int) 0;
+            $oMbqRdEtPm = MbqMain::$oClk->newObj('MbqRdEtPm');
+            $oMbqEtPmBox = $oMbqRdEtPm->initOMbqEtPmBox('0', array('case' => 'byBoxId'));
+            $this->data['inbox_unread_count'] = (int) $oMbqRdEtPm->getTotalMessageInbox($oMbqEtPmBox,'unread');
         } else {
             $this->data['inbox_unread_count'] = (int) 0;
         }

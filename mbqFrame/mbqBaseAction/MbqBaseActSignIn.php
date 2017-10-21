@@ -53,47 +53,49 @@ Abstract Class MbqBaseActSignIn extends MbqBaseAct {
         }
         $oMbqRdCommon = MbqMain::$oClk->newObj('MbqRdCommon');
         $check_spam = $oMbqRdCommon->getCheckSpam();
-        $this->register = false;
-
-        $this->TTVerify($in->token, $in->code);
-
+        $this->register = !empty($in->password);
         $result = false;
-	    if($this->verified)
-	    {
-            $this->setUserInfo($this->TTEmail);
-            if (isset($this->oMbqEtUser))
-            {
-                $result = $this->loginUser($in->trustCode);
-            }
-            else
-            {
-                $this->register = true;
-                $this->TTVerify($in->token, $in->code);
-                $this->createUser($this->TTEmail, $in->username, $in->password, $in->customRegisterFields, $check_spam);
-                $result = $this->loginUser($in->trustCode);
-            }
-	    }
-        // verify failed can still do register, the new account maybe inactive in this case
-        else
+        if($this->register)
         {
-            $this->setUserInfo($in->email);
-
-            if ($in->email && $in->username && empty($this->oMbqEtUser))
-            {
-                $this->register = true;
-                $this->createUser($in->email, $in->username,  $in->password, $in->customRegisterFields, $check_spam);
-                $result = $this->loginUser($in->trustCode);
+            if(!empty($in->email))
+            {  
+                $this->setUserInfo($in->email);
             }
-            else if($in->email && $in->username && $in->password && !empty($this->oMbqEtUser))
+            if($in->email && $in->username && $in->password && !empty($this->oMbqEtUser))
             {
                 $this->errors[] = 'The account already exists, please login with your username and password.';
             }
             else
             {
-                $this->errors[] = 'Authentication failed, please login with your username and password.';
+                if(MbqMain::$oMbqConfig->getCfg('user.sso_signin')->oriValue == 1)
+                {
+                    $this->TTVerify($in->token, $in->code);
+                }
+                $accountIsValidated =  $this->verified && $this->TTEmail == $in->email;
+                $this->createUser($in->email, $in->username, $in->password, $in->customRegisterFields, $check_spam, $accountIsValidated);
+                $result = $this->loginUser($in->trustCode);
             }
         }
-
+        else
+        {
+             $this->TTVerify($in->token, $in->code);
+             if($this->verified)
+             {
+                $this->setUserInfo($this->TTEmail);
+                if (isset($this->oMbqEtUser))
+                {
+                    $result = $this->loginUser($in->trustCode);
+                }
+                else
+                {
+                    $this->errors[] = 'Authentication failed, please login with your username and password.';
+                }
+             }
+             else
+             {
+                  $this->errors[] = 'Authentication failed, please login with your username and password.';
+             }
+        }
 
         if($result === true)
         {
@@ -139,7 +141,7 @@ Abstract Class MbqBaseActSignIn extends MbqBaseAct {
         }
     }
 
-    public function createUser($email, $username, $password, $custom_register_fields, $check_spam = false)
+    public function createUser($email, $username, $password, $custom_register_fields, $check_spam = false, $verified)
     {
         if (empty($email))
         {
@@ -163,9 +165,9 @@ Abstract Class MbqBaseActSignIn extends MbqBaseAct {
                 $oMbqWrEtUser = MbqMain::$oClk->newObj('MbqWrEtUser');
                 if($this->validateUsername($username))
                 {
-                    if($password = $this->validatePassword($password, $this->verified))
+                    if($password = $this->validatePassword($password, $verified))
                     {
-                        $this->oMbqEtUser = $oMbqWrEtUser->registerUser($username,  $password, $email, $this->verified, $custom_register_fields, $this->TTProfile, $this->errors);
+                        $this->oMbqEtUser = $oMbqWrEtUser->registerUser($username,  $password, $email, $verified, $custom_register_fields, $this->TTProfile, $this->errors);
                     }
                     else
                     {

@@ -1,7 +1,10 @@
 <?php
 
 $app_head_include = '';
-
+if(defined('AMP_PAGE'))
+{
+    return;
+}
 /* don't include it when the request was from inside app */
 $in_app = tt_getenv('HTTP_IN_APP');
 $referer = tt_getenv('HTTP_REFERER');
@@ -169,7 +172,7 @@ if (empty($app_banner_enable) && empty($app_alert_status))
 $app_banner_head = '';
 if (file_exists(dirname(__FILE__) . '/appbanner.js'))
 {
-    $app_banner_js_link = $board_url . '/' . tt_html_escape($tapatalk_dir_name) .'/smartbanner/appbanner.js?v=5.2';
+    $app_banner_js_link = $board_url . '/' . tt_html_escape($tapatalk_dir_name) .'/smartbanner/appbanner.js?v=5.3';
 
     $app_banner_head = '
         <!-- Tapatalk Banner head start -->
