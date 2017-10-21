@@ -40,7 +40,7 @@ Abstract Class MbqBaseRdEtPcMsg extends MbqBaseRd {
         if ($oMbqEtPcMsg->oAuthorMbqEtUser && $oMbqEtPcMsg->oAuthorMbqEtUser->isOnline->hasSetOriValue()) {
             $data['is_online'] = (boolean) $oMbqEtPcMsg->oAuthorMbqEtUser->isOnline->oriValue;
         }
-        if ($oMbqEtPcMsg->oAuthorMbqEtUser->userType->hasSetOriValue()) {
+        if ($oMbqEtPcMsg->oAuthorMbqEtUser && $oMbqEtPcMsg->oAuthorMbqEtUser->userType->hasSetOriValue()) {
             $data['msg_author_user_type'] = (string) $oMbqEtPcMsg->oAuthorMbqEtUser->userType->oriValue;
         }
         if ($oMbqEtPcMsg->hasLeft->hasSetOriValue()) {

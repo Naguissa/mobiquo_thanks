@@ -52,7 +52,22 @@ Abstract Class MbqBaseAct {
         }
         return $default;
     }
-   
+    function getAllInputParams()
+    {
+        if(is_array(MbqMain::$input))
+        {
+            return MbqMain::$input;
+        }
+        else
+        {
+            $inputResult = array();
+            foreach(MbqMain::$input as $key => $value)
+            {
+                $inputResult[$key] = $value;
+            }
+            return $inputResult;
+        }
+    }
     /**
      * getInput() method
      *

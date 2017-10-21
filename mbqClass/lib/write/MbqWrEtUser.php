@@ -15,12 +15,12 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
      * register user
      */
     public function registerUser($username, $password, $email, $verified, $custom_register_fields, $profile, &$errors) {
-        global $config, $mobiquo_config,$db, $user, $auth, $template, $phpbb_dispatcher, $phpbb_root_path, $phpEx,$user_info,$register,$phpbb_container, $request, $cache;
+        global $config, $mobiquo_config,$db, $user, $auth, $template, $phpbb_dispatcher, $phpbb_root_path, $phpEx,$user_info,$register,$phpbb_container, $request, $cache, $user;
         require_once($phpbb_root_path .'/includes/functions_user.'. $phpEx);
         if(file_exists($phpbb_root_path . 'includes/functions_module.' . $phpEx))
-	{
+        {
         	include_once($phpbb_root_path . 'includes/functions_module.' . $phpEx);
-	}
+        }
         $user->session_kill();
         $user->setup('ucp');
         if ($config['require_activation'] == USER_ACTIVATION_DISABLE || $mobiquo_config['sso_signin'] == 0)
@@ -136,32 +136,32 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
             }
             else
             {
-                $user_type = USER_INACTIVE;
-                $user_actkey =  gen_rand_string(mt_rand(6, 10));
-                $user_inactive_reason = INACTIVE_REGISTER;
-                $user_inactive_time = time();
+            	$user_actkey = gen_rand_string(mt_rand(6, 10));
+				$user_type = USER_INACTIVE;
+				$user_inactive_reason = INACTIVE_REGISTER;
+				$user_inactive_time = time();
             }
+			$passwords_manager = $phpbb_container->get('passwords.manager');
 
+			$user_row = array(
+				'username'				=> $data['username'],
+				'user_password'			=> $passwords_manager->hash($data['new_password']),
+				'user_email'			=> $data['email'],
+				'group_id'				=> (int) $group_id,
+				'user_timezone'			=> $data['tz'],
+				'user_lang'				=> $data['lang'],
+				'user_type'				=> $user_type,
+				'user_actkey'			=> $user_actkey,
+				'user_ip'				=> $user->ip,
+				'user_regdate'			=> time(),
+				'user_inactive_reason'	=> $user_inactive_reason,
+				'user_inactive_time'	=> $user_inactive_time,
+			);
 
-            $user_row = array(
-                'username'                => $data['username'],
-                'user_password'            => phpbb_hash($data['new_password']),
-                'user_email'            => $data['email'],
-                'group_id'                => (int) $group_id,
-                'user_timezone'            => (float) $data['tz'],
-                //'user_dst'                => $is_dst,
-                'user_actkey'                => $user_actkey,
-                'user_lang'                => $data['lang'],
-                'user_type'                => $user_type,
-                'user_ip'                => $user->ip,
-                'user_regdate'            => time(),
-                'user_inactive_reason'    => $user_inactive_reason,
-                'user_inactive_time'    => $user_inactive_time,
-            );
-            if ($config['new_member_post_limit'])
-            {
-                $user_row['user_new'] = 1;
-            }
+			if ($config['new_member_post_limit'])
+			{
+				$user_row['user_new'] = 1;
+			}
 
             if(!empty($profile))
             {
@@ -171,7 +171,7 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
                     $user_row['user_birthday'] = sprintf('%2d-%2d-%4d', $birth_arr[2], $birth_arr[1], $birth_arr[0]);
                 }
 
-            //    $user_row['user_from'] = $profile['location'];
+                //    $user_row['user_from'] = $profile['location'];
                 //$user_row['user_website'] = $profile['link'];
                 if(isset($profile['signature']))
                 {
@@ -179,6 +179,20 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
                 }
 
             }
+            /**
+             * Add into $user_row before user_add
+             *
+             * user_add allows adding more data into the users table
+             *
+             * @event core.ucp_register_user_row_after
+             * @var	bool	submit		Do we display the form only
+             *							or did the user press submit
+             * @var	array	cp_data		Array with custom profile fields data
+             * @var	array	user_row	Array with current ucp registration data
+             * @since 3.1.4-RC1
+             */
+            $vars = array('submit', 'cp_data', 'user_row');
+            extract($phpbb_dispatcher->trigger_event('core.ucp_register_user_row_after', compact($vars)));
 
             // Register user...
             $user_id = user_add($user_row,$cp_data);
@@ -199,15 +213,20 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
             else
             {
                 if ($config['require_activation'] == USER_ACTIVATION_SELF && $config['email_enable'])
-                {
-                    $message = $user->lang['ACCOUNT_INACTIVE'];
-                    $email_template = 'user_welcome_inactive';
-                }
-                else if ($config['require_activation'] == USER_ACTIVATION_ADMIN && $config['email_enable'])
-                {
-                    $message = $user->lang['ACCOUNT_INACTIVE_ADMIN'];
-                    $email_template = 'admin_welcome_inactive';
-                }
+				{
+					$message = $user->lang['ACCOUNT_INACTIVE'];
+					$email_template = 'user_welcome_inactive';
+				}
+				else if ($config['require_activation'] == USER_ACTIVATION_ADMIN && $config['email_enable'])
+				{
+					$message = $user->lang['ACCOUNT_INACTIVE_ADMIN'];
+					$email_template = 'admin_welcome_inactive';
+				}
+				else
+				{
+					$message = $user->lang['ACCOUNT_ADDED'];
+					$email_template = 'user_welcome';
+				}
 
                 if ($config['email_enable'] && $user_type == USER_INACTIVE)
                 {
@@ -244,47 +263,23 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
 
                     if ($config['require_activation'] == USER_ACTIVATION_ADMIN)
                     {
-                        // Grab an array of user_id's with a_user permissions ... these users can activate a user
-                        $admin_ary = $auth->acl_get_list(false, 'a_user', false);
-                        $admin_ary = (!empty($admin_ary[0]['a_user'])) ? $admin_ary[0]['a_user'] : array();
-
-                        // Also include founders
-                        $where_sql = ' WHERE user_type = ' . USER_FOUNDER;
-
-                        if (sizeof($admin_ary))
-                        {
-                            $where_sql .= ' OR ' . $db->sql_in_set('user_id', $admin_ary);
-                        }
-
-                        $sql = 'SELECT user_id, username, user_email, user_lang, user_jabber, user_notify_type
-                            FROM ' . USERS_TABLE . ' ' .
-                            $where_sql;
-                        $result = $db->sql_query($sql);
-
-                        while ($row = $db->sql_fetchrow($result))
-                        {
-                            $messenger->template('admin_activate', $row['user_lang']);
-                            $messenger->to($row['user_email'], $row['username']);
-                            $messenger->im($row['user_jabber'], $row['username']);
-
-                            $messenger->assign_vars(array(
-                                'USERNAME'            => htmlspecialchars_decode($data['username']),
-                                'U_USER_DETAILS'    => "$server_url/memberlist.$phpEx?mode=viewprofile&u=$user_id",
-                                'U_ACTIVATE'        => "$server_url/ucp.$phpEx?mode=activate&u=$user_id&k=$user_actkey")
-                            );
-
-                            $messenger->send($row['user_notify_type']);
-                        }
-                        $db->sql_freeresult($result);
+                        /* @var $phpbb_notifications \phpbb\notification\manager */
+                        $phpbb_notifications = $phpbb_container->get('notification_manager');
+                        $phpbb_notifications->add_notifications('notification.type.admin_activate_user', array(
+                            'user_id'		=> $user_id,
+                            'user_actkey'	=> $user_row['user_actkey'],
+                            'user_regdate'	=> $user_row['user_regdate'],
+                        ));
                     }
+
+                    $user_info['user_id'] = $user_id;
+                    $user_info = array_merge($user_info,$user_row);
                 }
-                $user_info['user_id'] = $user_id;
-                $user_info = array_merge($user_info,$user_row);
                 $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
-				return $oMbqRdEtUser->initOMbqEtUser($user_id, array('case'=>'byUserId'));
+                return $oMbqRdEtUser->initOMbqEtUser($user_id, array('case'=>'byUserId'));
             }
+            return false;
         }
-        return false;
     }
 
     public function updatePasswordDirectly($oMbqEtUser, $newPassword)
@@ -301,10 +296,10 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
         $passwords_manager = $phpbb_container->get('passwords.manager');
         $hashedPassword = $passwords_manager->hash($newPassword);
 
-        if ($auth->acl_get('u_chgpasswd') && $data['new_password'] && !$passwords_manager->check($data['new_password'], $user->data['user_password']))
+        if ($auth->acl_get('u_chgpasswd') && $newPassword && !$passwords_manager->check($newPassword, $user->data['user_password']))
         {
             $user->reset_login_keys();
-            add_log('user', $user->data['user_id'], 'LOG_USER_NEW_PASSWORD', $data['username']);
+            add_log('user', $user->data['user_id'], 'LOG_USER_NEW_PASSWORD', $user->data['username']);
         }
         $sql = 'UPDATE ' . USERS_TABLE . "
                                 SET user_password = '" . $hashedPassword . "'
@@ -554,6 +549,8 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
 
         if($banmode == 2)
         {
+            include_once($phpbb_root_path . 'includes/functions_posting.' . $phpEx);
+
             $ban_userid = $oMbqEtUser->userId->oriValue;
             //judge the user post num is or not > 50
             $sql = "SELECT COUNT(*) AS tp_count FROM " . POSTS_TABLE . " p WHERE p.poster_id = '".$ban_userid."'";
@@ -578,7 +575,7 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
                     $result2 = $db->sql_query($sql);
                     $post_data = $db->sql_fetchrow($result2);
                     $db->sql_freeresult($result2);
-                    handle_post_delete($row['forum_id'], $row['topic_id'], $row['post_id'], $post_data);
+                    delete_post($row['forum_id'], $row['topic_id'], $row['post_id'], $post_data);
                 }
                 unset($row);
                 $db->sql_freeresult($result1);

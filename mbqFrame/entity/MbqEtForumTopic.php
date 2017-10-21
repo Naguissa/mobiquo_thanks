@@ -38,6 +38,7 @@ Class MbqEtForumTopic extends MbqBaseEntity {
     public $canLike;
     public $isLiked;
     public $likeCount;
+    public $participatedIn;
     public $canDelete;
     public $isDeleted;
     public $canApprove;
@@ -106,6 +107,7 @@ Class MbqEtForumTopic extends MbqBaseEntity {
         $this->canLike = clone MbqMain::$simpleV;
         $this->isLiked = clone MbqMain::$simpleV;
         $this->likeCount = clone MbqMain::$simpleV;
+        $this->participatedIn = clone MbqMain::$simpleV;
         $this->canDelete = clone MbqMain::$simpleV;
         $this->isDeleted = clone MbqMain::$simpleV;
         $this->canApprove = clone MbqMain::$simpleV;

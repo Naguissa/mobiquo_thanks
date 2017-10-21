@@ -56,6 +56,7 @@ define('MBQ_BASE_WRITE_PATH', MBQ_BASE_LIB_PATH.'baseWrite'.MBQ_DS);    /* base 
 define('MBQ_BASE_PUSH_PATH', MBQ_FRAME_PATH.'basePush'.MBQ_DS);    /* base push class path */
 define('MBQ_PUSH_PATH', MBQ_PATH.'push'.MBQ_DS);    /* push class path */
 define('MBQ_SMARTBANNER_PATH', MBQ_PATH.'smartbanner'.MBQ_DS);    /* smartbanner lib path */
+define('MBQ_HOOK_PATH', MBQ_PATH.'hook'.MBQ_DS);    /* hooks path */
 
 /**
  * plugin config base class
@@ -242,6 +243,7 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqBaseActExceptionTest', MBQ_BASE_ACTION_PATH.'MbqBaseActExceptionTest.php');
         MbqMain::$oClk->reg('MbqBaseActUpdate', MBQ_BASE_ACTION_PATH.'MbqBaseActUpdate.php');
         MbqMain::$oClk->reg('MbqBaseActAvatar', MBQ_BASE_ACTION_PATH.'MbqBaseActAvatar.php');
+        MbqMain::$oClk->reg('MbqBaseActCallTapatalkApi', MBQ_BASE_ACTION_PATH.'MbqBaseActCallTapatalkApi.php');
         MbqMain::$oClk->reg('MbqBaseActGetConfig', MBQ_BASE_ACTION_PATH.'MbqBaseActGetConfig.php');
         MbqMain::$oClk->reg('MbqBaseActGetAlert', MBQ_BASE_ACTION_PATH.'MbqBaseActGetAlert.php');
         MbqMain::$oClk->reg('MbqBaseActGetForum', MBQ_BASE_ACTION_PATH.'MbqBaseActGetForum.php');
@@ -351,6 +353,7 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqActExceptionTest', MBQ_ACTION_PATH.'MbqActExceptionTest.php');
         MbqMain::$oClk->reg('MbqActUpdate', MBQ_ACTION_PATH.'MbqActUpdate.php');
         MbqMain::$oClk->reg('MbqActAvatar', MBQ_ACTION_PATH.'MbqActAvatar.php');
+        MbqMain::$oClk->reg('MbqActCallTapatalkApi', MBQ_ACTION_PATH.'MbqActCallTapatalkApi.php');
         MbqMain::$oClk->reg('MbqActGetConfig', MBQ_ACTION_PATH.'MbqActGetConfig.php');
         MbqMain::$oClk->reg('MbqActGetAlert', MBQ_ACTION_PATH.'MbqActGetAlert.php');
         MbqMain::$oClk->reg('MbqActGetContact', MBQ_ACTION_PATH.'MbqActGetContact.php');
@@ -573,9 +576,11 @@ Abstract Class MbqBaseConfig {
         $this->cfg['forum']['timezone'] = MbqMain::$oClk->newObj('MbqValue', array('cfgValueType' => MbqBaseFdt::getFdt('MbqFdtConfig.otherDefine.cfgValueType.range.adv'), 'oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.forum.timezone.default'))); /* Forum system default timezone for guest. Sample: -1, 9.5 */
         $this->cfg['forum']['alert'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.forum.alert.default')));    /* Indicate if the plugin support function get_alert */
         $this->cfg['forum']['advanced_move'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.forum.advanced_move.default')));    /* It controls the third parameter('redirect') of function m_move_topic . */
+        $this->cfg['forum']['advanced_html'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.forum.advanced_html.default')));    /* It controls the third parameter of function get_xxx to return advanced html . */
         $this->cfg['forum']['search_started_by'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.forum.search_started_by.default')));    /* started_by Boolean  Used when search user's topic, indicate if only user started topics should be returned. When this parameter was specified, 'showposts' status will always be false. This is a new feature of search function, and flag 'search_started_by' in get_config will indicate the support of this feature.. */
         $this->cfg['forum']['get_id_by_url'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.forum.get_id_by_url.default')));    /* Indicate if plugin support get_id_by_url function */
         $this->cfg['forum']['get_url_by_id'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.forum.get_url_by_id.default')));    /* Indicate if plugin support get_url_by_id function */
+        $this->cfg['forum']['id_to_url_redirect'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.forum.id_to_url_redirect.default')));    /* Indicate if plugin support get_url_by_id function */
         /* pm */
         $this->cfg['pm']['module_name'] = clone MbqMain::$simpleV;
         $this->cfg['pm']['module_version'] = clone MbqMain::$simpleV;

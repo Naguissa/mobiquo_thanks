@@ -215,6 +215,9 @@ Abstract Class MbqBaseRdEtForumTopic extends MbqBaseRd {
         if ($oMbqEtForumTopic->likeCount->hasSetOriValue()) {
             $data['like_count'] = (int) $oMbqEtForumTopic->likeCount->oriValue;
         }
+        if ($oMbqEtForumTopic->participatedIn->hasSetOriValue()) {
+            $data['participated_in'] = (boolean) $oMbqEtForumTopic->participatedIn->oriValue;
+        }
         if ($oMbqEtForumTopic->canDelete->hasSetOriValue()) {
             $data['can_delete'] = (boolean) $oMbqEtForumTopic->canDelete->oriValue;
         } else {
@@ -489,6 +492,9 @@ Abstract Class MbqBaseRdEtForumTopic extends MbqBaseRd {
         }
         if ($oMbqEtForumTopic->likeCount->hasSetOriValue()) {
             $data['like_count'] = (int) $oMbqEtForumTopic->likeCount->oriValue;
+        }
+        if ($oMbqEtForumTopic->participatedIn->hasSetOriValue()) {
+            $data['participated_in'] = (boolean) $oMbqEtForumTopic->participatedIn->oriValue;
         }
         if ($oMbqEtForumTopic->canDelete->hasSetOriValue()) {
             $data['can_delete'] = (boolean) $oMbqEtForumTopic->canDelete->oriValue;

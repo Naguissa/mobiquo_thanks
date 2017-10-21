@@ -162,6 +162,23 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
             }
         }
 
+        if ($user->data['is_registered'])
+        {
+            $sql = 'SELECT topic_title
+				FROM ' . TOPICS_TABLE . "
+				WHERE topic_poster = " . $user->data['user_id'] . "
+				ORDER BY topic_time DESC";
+            $result = $db->sql_query_limit($sql, 1);
+            if ($row = $db->sql_fetchrow($result))
+            {
+                $last_topic_title = $row['topic_title'];
+            }
+            $db->sql_freeresult($result);
+            if($last_topic_title == $subject)
+            {
+                trigger_error('FLOOD_ERROR');
+            }
+        }
         // Validate username
         if (($post_data['username'] && !$user->data['is_registered']))
         {

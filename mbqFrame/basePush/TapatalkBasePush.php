@@ -158,7 +158,7 @@ Abstract Class TapatalkBasePush {
                 //Sending push failed, try to update push_slug to db
                 $slug = self::push_slug($slug, 'UPDATE');
                 $update_res = unserialize($slug);
-                $update_res[3] = $push_resp;
+                $update_res[3] = substr($push_resp, 0, 100);
                 if($update_res[2] && $update_res[8])
                 {
                     $this->childReference->set_push_slug(serialize($update_res));
@@ -206,7 +206,12 @@ Abstract Class TapatalkBasePush {
      
     public function getTagList($content)
     {
-        if ( preg_match_all( '/(?<=^@|\s@)(#(.{1,50})#|\S{1,50}(?=[,\.;!\?]|\s|$))/U', $content, $tags ) )
+        /**
+         * old (?<=^@|\s@)(#(.{1,50})#|\S{1,50}(?=[,\.;!\?]|\s|$))
+         * now bbcode [mention]username[/mention]
+         *
+         */
+        if ( preg_match_all( '/(?<=^@|\s@|\[mention\])(#(.{1,50})#|.{1,50}(?=\[\/mention\])|\S{1,50}(?=[,\.;!\?]|\s|$))/U', $content, $tags ) )
         {
             foreach ($tags[2] as $index => $tag)
             {
