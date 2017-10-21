@@ -643,7 +643,7 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
             }
             else
             {
-                $replies = ($auth->acl_get('m_approve', $forum_id)) ? $row['topic_posts_approved'] + $row['topic_posts_unapproved']   : $row['topic_posts_approved'];
+                $replies = ($auth->acl_get('m_approve', $forum_id)) ? $row['topic_posts_approved'] + $row['topic_posts_unapproved'] + $row['topic_posts_softdeleted']   : $row['topic_posts_approved'];
             }
 
             $new_post = false;

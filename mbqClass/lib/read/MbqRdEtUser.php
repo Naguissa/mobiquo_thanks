@@ -187,26 +187,20 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $result = array();
             foreach($var as $userId)
             {
-                $result[] = $this->initOMbqEtUSer($userId, array('case'=>'byUserId'));
+                $result[] = $this->initOMbqEtUser($userId, array('case'=>'byUserId'));
             }
             return $result;
         } elseif ($mbqOpt['case'] == 'online') {
             $oMbqDataPage = $mbqOpt['oMbqDataPage'];
-            $sql = 'SELECT u.*, s.session_time, s.session_viewonline, s.session_start
-                    FROM ' . USERS_TABLE . ' u
-                    JOIN (
-                        SELECT u.user_id, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start
-                        FROM ' . USERS_TABLE . ' AS u
-                        LEFT JOIN ' . SESSIONS_TABLE .' AS s ON u.user_id = s.session_user_id
-                        WHERE u.user_type <> 2 AND session_viewonline = 1 AND session_time > ' . $onlinetime . '
-                        group by u.user_id
-                    ) s on u.user_id = s.user_id
-                    ORDER BY session_start DESC';
+            $sql = 'SELECT s.session_user_id, s.session_ip, s.session_viewonline
+		            FROM ' . SESSIONS_TABLE . ' s
+		            WHERE s.session_time >= ' . $onlinetime .
+		            ' AND s.session_user_id <> ' . ANONYMOUS;
             $result = $db->sql_query_limit($sql, $oMbqDataPage->numPerPage, $oMbqDataPage->startNum);
             $oMbqDataPage->datas = array();
             while($member = $db->sql_fetchrow($result))
             {
-                $oMbqDataPage->datas[] = $this->initOMbqEtUser($member, array('case'=>'user_row'));
+                $oMbqDataPage->datas[] = $this->initOMbqEtUser($member['session_user_id'], array('case'=>'byUserId'));
             }
             $db->sql_freeresult($result);
             return $oMbqDataPage;
@@ -214,15 +208,8 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         elseif ($mbqOpt['case'] == 'recommended') {
             $mode = $var;
             $oMbqDataPage = $mbqOpt['oMbqDataPage'];
-            $sql = 'SELECT u.*, s.session_time, s.session_viewonline, s.session_start
+            $sql = 'SELECT u.*
                     FROM ' . USERS_TABLE . ' u
-                    JOIN (
-                        SELECT u.user_id, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start
-                        FROM ' . USERS_TABLE . ' AS u
-                        LEFT JOIN ' . SESSIONS_TABLE .' AS s ON u.user_id = s.session_user_id
-                        WHERE u.user_type <> 2 AND session_viewonline = 1 AND session_time > ' . $onlinetime . '
-                        group by u.user_id, session_start
-                    ) s on u.user_id = s.user_id
                     WHERE u.user_type <> 2
                     ORDER BY u.username
                     LIMIT 20';
@@ -291,7 +278,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         $onlinetime = time() - ($config['load_online_time'] * 60);
         if($mbqOpt['case'] == 'user_row')
         {
-            if($var == false)
+            if($var == false || !isset($var['user_id']) || $var['user_id'] == '')
             {
                 return null;
             }
@@ -383,6 +370,30 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             {
                 $oMbqEtUser->isIgnored->setOriValue(MbqCm::checkIfUserIsIgnored($var['user_id']));
             }
+            $profileFields = $this->getCustomRegisterFields(false);
+            if(!empty($profileFields))
+            {
+                $sql = 'SELECT f.* FROM ' . PROFILE_FIELDS_DATA_TABLE . ' f
+	                    WHERE f.user_id = ' . $oMbqEtUser->userId->oriValue;
+                $sqlresult = $db->sql_query($sql);
+                $profileFieldData =  $db->sql_fetchrow($sqlresult);
+                $db->sql_freeresult($sqlresult);
+                $custom_fields_list = array();
+                if($profileFieldData)
+                {
+                    foreach($profileFields as $profileField)
+                    {
+                        if($profileField['mbqBind']['field_active'] == 1 && $profileField['mbqBind']['field_no_view'] == 0 && $profileField['mbqBind']['field_hide'] == 0)
+                        {
+                            if(isset($profileFieldData[$profileField['key']]))
+                            {
+                                TT_addNameValue($profileField['name'], $profileFieldData[$profileField['key']], $custom_fields_list);
+                            }
+                        }
+                    }
+                }
+                $oMbqEtUser->customFieldsList->setOriValue($custom_fields_list);
+            }
             $oMbqEtUser->postCountdown->setOriValue($config['flood_interval']);
             $oMbqEtUser->currentAction->setOriValue($this->getUserLocation($var));
             $oMbqEtUser->regTime->setOriValue($var['user_regdate']);
@@ -393,54 +404,40 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         else if($mbqOpt['case'] == 'byLoginName')
         {
             $username = $var;
-            $sql = "SELECT u.*, s.session_time, s.session_viewonline, s.session_start, s.session_page, session_forum_id
-                FROM " . USERS_TABLE . " u
-                JOIN (
-                        SELECT u.user_id, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
-                        FROM " . USERS_TABLE . " AS u
-                        LEFT JOIN " . SESSIONS_TABLE ." AS s ON u.user_id = s.session_user_id
-                        WHERE  u.username = '" . $db->sql_escape($username) . "'
-                        group by u.user_id, session_start, session_page, session_forum_id
-                    ) s on u.user_id = s.user_id
-                WHERE u.username = '" . $db->sql_escape($username) . "'
-                ORDER BY session_time DESC";
+            $sql = "SELECT u.user_id FROM " . USERS_TABLE . " u
+                WHERE u.username_clean = '" . $db->sql_escape(utf8_clean_string($username)) . "'
+                ";
             $result = $db->sql_query($sql);
             $member = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
-            return $this->initOMbqEtUser($member, array('case'=>'user_row'));
-        }
-        else if ($mbqOpt['case'] == 'byUserId') {
-            $user_id = $var;
-            $sql = "SELECT u.*, s.session_time, s.session_viewonline, s.session_start, s.session_page, session_forum_id
-                FROM " . USERS_TABLE . " u
-                LEFT JOIN (
-                        SELECT u.user_id, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
-                        FROM " . USERS_TABLE . " AS u
-                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
-                        WHERE u.user_id = '$user_id'
-                        group by u.user_id, session_start, session_page, session_forum_id
-                    ) s on u.user_id = s.user_id
-                WHERE u.user_id = '$user_id'
-                ORDER BY session_time DESC";
-            $result = $db->sql_query($sql);
-            $member = $db->sql_fetchrow($result);
-            $db->sql_freeresult($result);
-            return $this->initOMbqEtUser($member, array('case'=>'user_row'));
+            if($member)
+            {
+                return $this->initOMbqEtUser($member['user_id'], array('case'=>'byUserId'));
+            }
+            return null;
         }
         elseif($mbqOpt['case'] == 'byEmail')
         {
             $email = $var;
-            $sql = "SELECT u.*, s.session_time, s.session_viewonline, s.session_start, s.session_page, session_forum_id
+            $sql = "SELECT u.user_id
                 FROM " . USERS_TABLE . " u
-                JOIN (
-                        SELECT u.user_id, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
+                WHERE u.user_email = '$email'";
+            $result = $db->sql_query($sql);
+            $member = $db->sql_fetchrow($result);
+            $db->sql_freeresult($result);
+            if($member)
+            {
+                return $this->initOMbqEtUser($member['user_id'], array('case'=>'byUserId'));
+            }
+            return null;
+        }
+        else if ($mbqOpt['case'] == 'byUserId') {
+            $user_id = $var;
+            $sql = "    SELECT u.*, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
                         FROM " . USERS_TABLE . " AS u
-                        LEFT JOIN " . SESSIONS_TABLE ." AS s ON u.user_id = s.session_user_id
-                        WHERE u.user_email = '$email'
-                        group by u.user_id, session_start, session_page, session_forum_id
-                    ) s on u.user_id = s.user_id
-                WHERE u.user_email = '$email'
-                ORDER BY session_time DESC";
+                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
+                        WHERE u.user_id = '$user_id'
+                    ";
             $result = $db->sql_query($sql);
             $member = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
@@ -448,11 +445,13 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         }
     }
 
-    public function getCustomRegisterFields()
+    public function getCustomRegisterFields($onlyRequired = true)
     {
         global $db, $user, $phpbb_container,$cache;
         $lang_id = $user->get_iso_lang_id();
-        $sql = 'SELECT l.*, f.*
+        if($onlyRequired)
+        {
+            $sql = 'SELECT l.*, f.*
 	FROM ' . PROFILE_LANG_TABLE . ' l, ' . PROFILE_FIELDS_TABLE . " f
 	WHERE f.field_active = 1
 		AND f.field_show_on_reg = 1
@@ -460,6 +459,16 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
 		AND l.field_id = f.field_id
 		AND f.field_required = 1
 	ORDER BY f.field_order";
+        }
+        else
+        {
+            $sql = 'SELECT l.*, f.*
+	FROM ' . PROFILE_LANG_TABLE . ' l, ' . PROFILE_FIELDS_TABLE . " f
+	WHERE f.field_active = 1
+		AND l.lang_id = $lang_id
+		AND l.field_id = f.field_id
+		ORDER BY f.field_order";
+        }
         $result = $db->sql_query($sql);
         $cp = $phpbb_container->get('profilefields.manager');
         $required_custom_fields = array();
@@ -474,6 +483,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                 'type'          => 'input',
                 'default'       => $row['lang_default_value'] == '' ? $row['field_default_value'] : $row['lang_default_value'],
             );
+            $custom_field_data['mbqBind'] = $row;
 	    	if(getPHPBBVersion() == '3.0')
 	{
 	  if($type === "5")//'profilefields.type.dropdown')
@@ -765,4 +775,5 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         }
         return $location;
     }
+
 }

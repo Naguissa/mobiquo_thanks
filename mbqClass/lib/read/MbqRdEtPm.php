@@ -301,19 +301,33 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
 
             // get msg id from parameters
             $msg_id = intval($var['msgId']);
-         //   $box_id = intval($var['boxId']);
+            if(isset($var['boxId']))
+            {
+                $box_id = intval($var['boxId']);
+            }
             if (!$msg_id) trigger_error('NO_MESSAGE');
-          //  $GLOBALS['return_html'] = $var['returnHtml'];
+            //  $GLOBALS['return_html'] = $var['returnHtml'];
 
             $message_row = array();
 
             // Get Message user want to see
-            $sql = 'SELECT t.*, p.*, u.*
+            if(isset($box_id))
+            {
+                $sql = 'SELECT t.*, p.*, u.*
+            FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+            WHERE t.msg_id = p.msg_id
+            AND t.folder_id = $box_id
+            AND p.msg_id = $msg_id
+            AND u.user_id = p.author_id";
+            }
+            else
+            {
+                $sql = 'SELECT t.*, p.*, u.*
             FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
             WHERE t.msg_id = p.msg_id
             AND p.msg_id = $msg_id
             AND u.user_id = p.author_id";
-
+            }
             $result = $db->sql_query($sql);
             $message_row = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
@@ -485,7 +499,11 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
                 $address = explode(',',$row['to_address']);
                 foreach($address as $addr)
                 {
-                    $msg_to_list[] = str_replace('u_','',$addr);
+                    $toid =  str_replace('u_','',$addr);
+                    if($user->data['user_id'] != $toid)
+                    {
+                        $msg_to_list[] = $toid;
+                    }
                 }
             }
             else
@@ -554,13 +572,7 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
             $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
             foreach ($msg_to_list as $toUserId)
             {
-                //$msg_to[] = new xmlrpcval(array(
-                //    'user_id'   => new xmlrpcval($address['id'], 'string'),
-                //    'username'  => new xmlrpcval(basic_clean($address['name']), 'base64'),
-                //    'user_type' => check_return_user_type($address['id']),
-                //    //'tapatalk'  => new xmlrpcval(is_tapatalk_user($address['id']), 'string'),
-                //), 'struct');
-                if(stripos($toUserId,"g_") == 0)
+                if(stripos($toUserId,"g_") === 0)
                 {
                     $sql = 'SELECT group_id as id, group_name as name, group_colour as colour, group_type
                         FROM ' . GROUPS_TABLE . '
@@ -576,11 +588,14 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
                 {
                     $oMbqEtUser = $oMbqRdEtUser->initOMbqEtUser($toUserId, array('case'=>'byUserId'));
                 }
-                array_push($oMbqEtPm->objsRecipientMbqEtUser,$oMbqEtUser);
+                if($oMbqEtUser != null)
+                {
+                    array_push($oMbqEtPm->objsRecipientMbqEtUser,$oMbqEtUser);
+                }
             }
 
             $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
-            $oMbqEtPm->oFirstRecipientMbqEtUser = $oMbqRdEtUser->initOMbqEtUSer($oMbqEtPm->objsRecipientMbqEtUser[0]->userId->oriValue, array('case' => 'byUserIds'));
+            $oMbqEtPm->oFirstRecipientMbqEtUser = $oMbqEtPm->objsRecipientMbqEtUser[0];
             $oMbqEtPm->oAuthorMbqEtUser = $oMbqRdEtUser->initOMbqEtUSer($oMbqEtPm->msgFromId->oriValue, array('case' => 'byUserId'));
 
             if(isset($row['attachments']))
