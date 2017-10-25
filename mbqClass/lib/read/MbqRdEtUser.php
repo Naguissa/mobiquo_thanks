@@ -228,14 +228,8 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         elseif ($mbqOpt['case'] == 'searchByName') {
             $keywords = $db->sql_escape($var);
             $oMbqDataPage = $mbqOpt['oMbqDataPage'];
-            $sql = 'SELECT u.*, s.session_time, s.session_viewonline, s.session_start
+            $sql = 'SELECT u.user_id
                     FROM ' . USERS_TABLE . ' u
-                    LEFT JOIN (
-                        SELECT u.user_id, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start
-                        FROM ' . USERS_TABLE . ' AS u
-                        LEFT JOIN ' . SESSIONS_TABLE .' AS s ON u.user_id = s.session_user_id
-                        WHERE u.user_type <> 2 AND session_viewonline = 1  AND u.username COLLATE UTF8_GENERAL_CI LIKE \'%' . $keywords . '%\'
-                    ) s on u.user_id = s.user_id
                     WHERE u.user_type <> 2 and u.username COLLATE UTF8_GENERAL_CI LIKE \'%' . $keywords . '%\'
                     ORDER BY u.username
                     LIMIT 20';
@@ -244,7 +238,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $members = array();
             while($member = $db->sql_fetchrow($result))
             {
-                $members[] = $this->initOMbqEtUser($member, array('case'=>'user_row'));
+                $members[] = $this->initOMbqEtUser($member['user_id'], array('case'=>'byUserId'));
             }
             $db->sql_freeresult($result);
             $oMbqDataPage->datas = $members;
@@ -433,9 +427,10 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         }
         else if ($mbqOpt['case'] == 'byUserId') {
             $user_id = $var;
-            $sql = "    SELECT u.*, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
+            $sql = "    SELECT u.*, s.session_time, s2.session_viewonline, s.session_start, s.session_page, s.session_forum_id
                         FROM " . USERS_TABLE . " AS u
-                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
+                        LEFT JOIN (SELECT * FROM " . SESSIONS_TABLE . " WHERE session_user_id = '$user_id' ORDER BY session_time DESC LIMIT 1)  AS s ON u.user_id = s.session_user_id
+                        LEFT JOIN (SELECT * FROM " . SESSIONS_TABLE . " WHERE session_user_id = '$user_id' ORDER BY session_viewonline ASC LIMIT 1)  AS s2 ON u.user_id = s2.session_user_id
                         WHERE u.user_id = '$user_id'
                     ";
             $result = $db->sql_query($sql);

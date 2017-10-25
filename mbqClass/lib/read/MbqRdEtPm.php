@@ -508,7 +508,11 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
             }
             else
             {
-                $msg_to_list = array($user->data['user_id']);
+                $msg_to_list = array();
+                foreach($row['msgTo'] as $addr)
+                {
+                     $msg_to_list[] = $addr['user_id'];
+                }
             }
             //$icon_url   = (!empty($icons[$row['icon_id']])) ? $phpbb_home . $config['icons_path'] . '/' . $icons[$row['icon_id']]['img'] : '';
             $icon_url   = ($user->optionget('viewavatars')) ? get_user_avatar_url($row['user_avatar'], $row['user_avatar_type']) : '';
@@ -564,9 +568,33 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
             $oMbqEtPm->isOnline->setOriValue($is_online);
             $oMbqEtPm->iconUrl->setOriValue($icon_url);
             $oMbqEtPm->shortContent->setOriValue($short_content);
-            $oMbqEtPm->msgContent->setOriValue(censor_text($row['message_text']));
-            $oMbqEtPm->msgContent->setTmlDisplayValue(tapatalk_process_bbcode($row['message_text'], $row['bbcode_uid']));
-            $oMbqEtPm->msgContent->setTmlDisplayValueNoHtml(post_html_clean(censor_text($row['message_text'])));
+            $message = $row['message_text'];
+            if(isset($row['attachments']))
+            {
+                $attachCount = 0;
+                foreach($row['attachments'] as $attachment)
+                {
+                    if(preg_match('/\[attachment=' . $attachCount  . '\](.*?)\[\/attachment(.*?)\]/si', $message))
+                    {
+                        $oMbqRdAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
+                        $oMbqEtAtt = $oMbqRdAtt->initOMbqEtAtt($attachment, array('case' => 'byRow'));
+                        $message = preg_replace('/\[attachment=' . $attachCount  . '\](.*?)\[\/attachment(.*?)\]/si',  $oMbqEtAtt->contentType->oriValue == MbqBaseFdt::getFdt('MbqFdtAtt.MbqEtAtt.contentType.range.image') ?  '[img]' . $oMbqEtAtt->url->oriValue . '[/img]' : '[url]' . $oMbqEtAtt->url->oriValue . '[/url]',$message);
+                        $oMbqEtPm->objsMbqEtAtt[] = $oMbqEtAtt;
+                    }
+                    else
+                    {
+                        $oMbqRdAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
+                        $oMbqEtAtt = $oMbqRdAtt->initOMbqEtAtt($attachment, array('case' => 'byRow'));
+                        $oMbqEtPm->objsNotInContentMbqEtAtt[] = $oMbqEtAtt;
+                    }
+                    $attachCount++;
+                }
+            }
+
+
+            $oMbqEtPm->msgContent->setOriValue(censor_text($message));
+            $oMbqEtPm->msgContent->setTmlDisplayValue(tapatalk_process_bbcode($message, $row['bbcode_uid']));
+            $oMbqEtPm->msgContent->setTmlDisplayValueNoHtml(post_html_clean(censor_text($message)));
             $oMbqEtPm->allowSmilies->setOriValue($row['enable_smilies'] ? true : false);
             $oMbqEtPm->canReport->setOriValue($config['allow_pm_report'] == "1" && $row['message_reported'] == "0");
             $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
@@ -598,20 +626,7 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
             $oMbqEtPm->oFirstRecipientMbqEtUser = $oMbqEtPm->objsRecipientMbqEtUser[0];
             $oMbqEtPm->oAuthorMbqEtUser = $oMbqRdEtUser->initOMbqEtUSer($oMbqEtPm->msgFromId->oriValue, array('case' => 'byUserId'));
 
-            if(isset($row['attachments']))
-            {
-                foreach ($row['attachments'] as $attachment)
-                {
-                    $oMbqEtAtt = MbqMain::$oClk->newObj('MbqEtAtt');
-                    $oMbqEtAtt->attId->setOriValue($attachment['attach_id']);
-                    $oMbqEtAtt->uploadFileName->setOriValue($attachment['filename']);
-                    $oMbqEtAtt->filtersSize->setOriValue($attachment['filesize']);
-                    $oMbqEtAtt->url->setOriValue($attachment['url']);
-                    $oMbqEtAtt->thumbnailUrl->setOriValue($attachment['thumbnail_url']);
-                    $oMbqEtAtt->contentType->setOriValue($attachment['content_type']);
-                    array_push($oMbqEtPm->objsAttachmentsMbqEtAtt,$oMbqEtAtt);
-                }
-            }
+
             $oMbqEtPm->mbqBind = $row;
             return $oMbqEtPm;
         }else if($mbqOpt['case'] =='message'){

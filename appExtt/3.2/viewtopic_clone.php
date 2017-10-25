@@ -12,8 +12,8 @@
  * the docs/CREDITS.txt file.
  *
  */
-global $db, $phpbb_root_path, $phpEx, $user, $phpbb_container, $request, $phpbb_dispatcher, $pagination, $auth, $attachment_by_id, $support_post_thanks, $topic_data, $total_posts, $can_subscribe, $post_data, $template, $table_prefix, $thanksHelper;
 
+global $db, $phpbb_root_path, $phpEx, $user, $phpbb_container, $request, $phpbb_dispatcher, $pagination, $auth, $attachment_by_id, $support_post_thanks, $topic_data, $total_posts, $can_subscribe, $post_data, $template, $table_prefix, $thanksHelper;
 defined('IN_MOBIQUO') or exit;
 
 //include($phpbb_root_path . 'common.' . $phpEx);
@@ -1448,59 +1448,8 @@ if (sizeof($attach_list))
 			$attachments[$row['post_msg_id']][] = $row;
 		}
 		$db->sql_freeresult($result);
-
 		// No attachments exist, but post table thinks they do so go ahead and reset post_attach flags
-		if (!sizeof($attachments))
-		{
-			$sql = 'UPDATE ' . POSTS_TABLE . '
-				SET post_attachment = 0
-				WHERE ' . $db->sql_in_set('post_id', $attach_list);
-			$db->sql_query($sql);
 
-			// We need to update the topic indicator too if the complete topic is now without an attachment
-			if (sizeof($rowset) != $total_posts)
-			{
-				// Not all posts are displayed so we query the db to find if there's any attachment for this topic
-				$sql = 'SELECT a.post_msg_id as post_id
-					FROM ' . ATTACHMENTS_TABLE . ' a, ' . POSTS_TABLE . " p
-					WHERE p.topic_id = $topic_id
-						AND p.post_visibility = " . ITEM_APPROVED . '
-						AND p.topic_id = a.topic_id';
-				$result = $db->sql_query_limit($sql, 1);
-				$row = $db->sql_fetchrow($result);
-				$db->sql_freeresult($result);
-
-				if (!$row)
-				{
-					$sql = 'UPDATE ' . TOPICS_TABLE . "
-						SET topic_attachment = 0
-						WHERE topic_id = $topic_id";
-					$db->sql_query($sql);
-				}
-			}
-			else
-			{
-				$sql = 'UPDATE ' . TOPICS_TABLE . "
-					SET topic_attachment = 0
-					WHERE topic_id = $topic_id";
-				$db->sql_query($sql);
-			}
-		}
-		else if ($has_approved_attachments && !$topic_data['topic_attachment'])
-		{
-			// Topic has approved attachments but its flag is wrong
-			$sql = 'UPDATE ' . TOPICS_TABLE . "
-				SET topic_attachment = 1
-				WHERE topic_id = $topic_id";
-			$db->sql_query($sql);
-
-			$topic_data['topic_attachment'] = 1;
-		}
-		else if ($has_unapproved_attachments && !$topic_data['topic_attachment'])
-		{
-			// Topic has only unapproved attachments but we have the right to see and download them
-			$topic_data['topic_attachment'] = 1;
-		}
     //}
     //else
     //{

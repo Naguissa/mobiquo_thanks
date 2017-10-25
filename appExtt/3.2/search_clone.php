@@ -111,11 +111,11 @@ switch ($search_id)
 if(empty($search_id))
 {
     // Is user able to search? Has search been disabled?
-    if (!$auth->acl_get('u_search') || !$auth->acl_getf_global('f_search') || !$config['load_search'])
-    {
-	    $template->assign_var('S_NO_SEARCH', true);
-	    trigger_error('NO_SEARCH');
-    }
+    //if (!$auth->acl_get('u_search') || !$auth->acl_getf_global('f_search') || !$config['load_search'])
+    //{
+    //    $template->assign_var('S_NO_SEARCH', true);
+    //    trigger_error('NO_SEARCH');
+    //}
 
     // Check search load limit
     if ($user->load && $config['limit_search_load'] && ($user->load > doubleval($config['limit_search_load'])))
@@ -959,16 +959,16 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 					$row['display_text_only'] = false;
 					$bbcode_bitfield = $bbcode_bitfield | base64_decode($row['bbcode_bitfield']);
 
-					// Does this post have an attachment? If so, add it to the list
-					if ($row['post_attachment'] && $config['allow_attachments'])
-					{
-						$attach_list[$row['forum_id']][] = $row['post_id'];
-					}
+                // Does this post have an attachment? If so, add it to the list
+                if ($row['post_attachment'] && $config['allow_attachments'])
+                {
+                $attach_list[$row['forum_id']][] = $row['post_id'];
+                }
 				}
 				else
 				{*/
-					$row['post_text'] = $text_only_message;
-					$row['display_text_only'] = true;
+                $row['post_text'] = $text_only_message;
+                $row['display_text_only'] = true;
 				//}
 
 				$rowset[] = $row;

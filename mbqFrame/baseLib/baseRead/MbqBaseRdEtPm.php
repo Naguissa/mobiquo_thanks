@@ -85,12 +85,12 @@ Abstract Class MbqBaseRdEtPm extends MbqBaseRd {
         }
         if($includeAttachements)
         {
-            if(isset($oMbqEtPm->objsAttachmentsMbqEtAtt)){
-                $oMbqEtAtt = MbqMain::$oClk->newObj('MbqEtAtt');
-                $data['attachments'] = $oMbqEtAtt->returnApiDataAttachment($oMbqEtPm->objsAttachmentsMbqEtAtt);
-            } else {
-                $data['attachments'] = array();
-            }
+            /* attachments */
+            $oMbqRdEtAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
+            $data['attachments'] = (array) $oMbqRdEtAtt->returnApiArrDataAttachment($oMbqEtPm->objsNotInContentMbqEtAtt);
+            /* inline attachments*/
+            $oMbqRdEtAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
+            $data['inlineattachments'] = (array) $oMbqRdEtAtt->returnApiArrDataAttachment($oMbqEtPm->objsMbqEtAtt);
         }
         return $data;
     }
