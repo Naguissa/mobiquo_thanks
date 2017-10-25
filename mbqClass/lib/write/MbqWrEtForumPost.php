@@ -1065,7 +1065,7 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
 	 * thank post
 	 */
 	public function thankPost($oMbqEtForumPost, $oMbqEtThank) {
-		global $db, $phpbb_root_path, $phpEx, $user, $phpbb_container, $request, $phpbb_dispatcher, $auth, $support_post_thanks, $template, $table_prefix, $thanksHelper;
+		global $db, $phpbb_root_path, $phpEx, $user, $phpbb_container, $request, $phpbb_dispatcher, $auth, $support_post_thanks, $template, $table_prefix, $thanksHelper, $config;
 
 
 		// Redo the trick only if needed
