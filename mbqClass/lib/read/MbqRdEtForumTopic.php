@@ -291,6 +291,7 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
 
                     $topic_list = array();
                     $objsMbqEtForumTopic = array();
+                    $this->prepare($rowset);
                     foreach($rowset as $row)
                     {
                         $objsMbqEtForumTopic[] = $this->initOMbqEtForumTopic($row, array('case' => 'byRow','oMbqEtForum' => $oMbqEtForum, 'oMbqEtUser' => true, 'user_watch_row' => $user_watch_row));
@@ -372,6 +373,7 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
 
                     $topic_list = array();
                     $objsMbqEtForumTopic = array();
+                    $this->prepare($rowset);
                     foreach($rowset as $row)
                     {
                         $objsMbqEtForumTopic[] = $this->initOMbqEtForumTopic($row, array('case' => 'byRow', 'oMbqEtForum' => true, 'user_watch_row' => $user_watch_row));
@@ -414,10 +416,15 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
                     }
                     $db->sql_freeresult($result);
                     $newMbqOpt['user_watch_row'] = $user_watch_row;
-
+                    $rowset = array();
                     foreach($searchResults as $item)
                     {
-                        $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($item['bind'], $newMbqOpt);
+                        $rowset[] = $item['bind'];
+                    }
+                    $this->prepare($rowset);
+                    foreach($rowset as $row)
+                    {
+                        $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($row, $newMbqOpt);
                     }
                     $oMbqDataPage->totalNum = $total_match_count;
                     return $oMbqDataPage;
@@ -478,6 +485,7 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
                     }
                     $db->sql_freeresult($result);
                     $newMbqOpt['user_watch_row'] = $user_watch_row;
+
 
                     foreach($postRows as $postRow)
                     {
@@ -604,9 +612,15 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
 
                     $newMbqOpt['oMbqEtForumTopic'] = true;
                     $newMbqOpt['oMbqEtUser'] = true;
+                    $rowset = array();
                     foreach($searchResults as $item)
                     {
-                        $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($item['bind'], $newMbqOpt);
+                        $rowset[] = $item['bind'];
+                    }
+                    $this->prepare($rowset);
+                    foreach($rowset as $row)
+                    {
+                        $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($row, $newMbqOpt);
                     }
                     $oMbqDataPage->totalNum =  $total_match_count ? $total_match_count : 0;
                     return $oMbqDataPage;
@@ -687,9 +701,7 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
                 else
                 {
                     $oMbqRdEtForum = MbqMain::$oClk->newObj('MbqRdEtForum');
-                    if ($objsMbqEtForum = $oMbqRdEtForum->getObjsMbqEtForum(array($oMbqEtForumTopic->forumId->oriValue), array('case' => 'byForumIds'))) {
-                        $oMbqEtForumTopic->oMbqEtForum = $objsMbqEtForum[0];
-                    }
+                    $oMbqEtForumTopic->oMbqEtForum = $oMbqRdEtForum->initOMbqEtForum($oMbqEtForumTopic->forumId->oriValue, array('case' => 'byForumId'));
                 }
 
             }
@@ -760,78 +772,153 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
                 $oMbqEtForumTopic->oLastReplyMbqEtUser = $oMbqRdEtUser->initOMbqEtUSer($oMbqEtForumTopic->lastReplyAuthorId->oriValue, array('case' => 'byUserId'));
             }
             $oMbqEtForumTopic->mbqBind['TopicRow'] = $row;
-
             return $oMbqEtForumTopic;
         }
         elseif ($mbqOpt['case'] == 'byTopicId') {
             global $db, $user;
-            $objsMbqEtForumTopic = $this->getObjsMbqEtForumTopic($var, array('case' => 'byTopicIds'));
-            $objMbqEtForumTopic = null;
-            if(sizeof($objsMbqEtForumTopic) == 1)
+            if(MbqMain::$Cache->Exists('MbqEtForumTopic',$var))
             {
-                $objMbqEtForumTopic = $objsMbqEtForumTopic[0];
-                $forum_id = $objMbqEtForumTopic->forumId->oriValue;
-                $topic_id = $objMbqEtForumTopic->topicId->oriValue;
-                $topic_traking_info = get_complete_topic_tracking($forum_id, $topic_id);
-                $timestamp = isset($topic_traking_info[$topic_id]) ? $topic_traking_info[$topic_id] : null;
-                $user_id = $user->data['user_id'];
-
-                if(getPHPBBVersion() == '3.0')
-                {
-                    if(isset($timestamp))
-                    {
-                        $sql = "select t.total - u.unread as position, t.total, u.unread
-                    from (
-                    select count(post_id) as total from " . POSTS_TABLE . "
-                    where topic_id = $topic_id and post_approved = 1) t
-                    left join (
-                    select count(post_id) as unread from " . POSTS_TABLE . "
-                    where topic_id = $topic_id and post_approved = 1 and post_time > $timestamp) u on 1=1";
-                    }
-                    else
-                    {
-                        $sql = 'select t.total - u.unread as position, t.total, u.unread
-                    from (
-                    select count(post_id) as total from ' . POSTS_TABLE . '
-                    where topic_id = ' . $topic_id . ' and post_approved = 1) t
-                    left join (
-                    select count(post_id) as unread from ' . POSTS_TABLE . '
-                    where topic_id = ' . $topic_id . ' and post_approved = 1 and post_time > (select case when MAX(mark_time) is null then 0 else MAX(mark_time) end as mark_time from ' . TOPICS_TRACK_TABLE . ' where topic_id = ' . $topic_id . ' and user_id = ' . $user_id . ')) u on 1=1';
-
-                    }
-                }
-                else
-                {
-                    if(isset($timestamp))
-                    {
-                        $sql = "select t.total - u.unread as position, t.total, u.unread
-                    from (
-                    select count(post_id) as total from " . POSTS_TABLE . "
-                    where topic_id = $topic_id and post_visibility = 1) t
-                    left join (
-                    select count(post_id) as unread from " . POSTS_TABLE . "
-                    where topic_id = $topic_id and post_visibility = 1 and post_time > $timestamp) u on 1=1";
-                    }
-                    else
-                    {
-                        $sql = 'select t.total - u.unread as position, t.total, u.unread
-                    from (
-                    select count(post_id) as total from ' . POSTS_TABLE . '
-                    where topic_id = ' . $topic_id . ' and post_visibility = 1) t
-                    left join (
-                    select count(post_id) as unread from ' . POSTS_TABLE . '
-                    where topic_id = ' . $topic_id . ' and post_visibility = 1 and post_time > (select case when MAX(mark_time) is null then 0 else MAX(mark_time) end as mark_time from ' . TOPICS_TRACK_TABLE . ' where topic_id = ' . $topic_id . ' and user_id = ' . $user_id . ')) u on 1=1';
-
-                    }
-                }
-
-                $result = $db->sql_query($sql);
-                $row = $db->sql_fetchrow($result);
-
-                $objMbqEtForumTopic->firstUnreadPosition->setOriValue($row['position']);
+                return MbqMain::$Cache->Get('MbqEtForumTopic',$var);
             }
-            return $objMbqEtForumTopic;
+            else
+            {
+                $objsMbqEtForumTopic = $this->getObjsMbqEtForumTopic($var, array('case' => 'byTopicIds'));
+                $objMbqEtForumTopic = null;
+                if(sizeof($objsMbqEtForumTopic) == 1)
+                {
+                    $objMbqEtForumTopic = $objsMbqEtForumTopic[0];
+
+
+                    $forum_id = $objMbqEtForumTopic->forumId->oriValue;
+                    $topic_id = $objMbqEtForumTopic->topicId->oriValue;
+                    $topic_traking_info = get_complete_topic_tracking($forum_id, $topic_id);
+                    $timestamp = isset($topic_traking_info[$topic_id]) ? $topic_traking_info[$topic_id] : null;
+                    $user_id = $user->data['user_id'];
+
+                    if(getPHPBBVersion() == '3.0')
+                    {
+                        if(isset($timestamp))
+                        {
+                            $sql = "select t.total - u.unread as position, t.total, u.unread
+                        from (
+                        select count(post_id) as total from " . POSTS_TABLE . "
+                        where topic_id = $topic_id and post_approved = 1) t
+                        left join (
+                        select count(post_id) as unread from " . POSTS_TABLE . "
+                        where topic_id = $topic_id and post_approved = 1 and post_time > $timestamp) u on 1=1";
+                        }
+                        else
+                        {
+                            $sql = 'select t.total - u.unread as position, t.total, u.unread
+                        from (
+                        select count(post_id) as total from ' . POSTS_TABLE . '
+                        where topic_id = ' . $topic_id . ' and post_approved = 1) t
+                        left join (
+                        select count(post_id) as unread from ' . POSTS_TABLE . '
+                        where topic_id = ' . $topic_id . ' and post_approved = 1 and post_time > (select case when MAX(mark_time) is null then 0 else MAX(mark_time) end as mark_time from ' . TOPICS_TRACK_TABLE . ' where topic_id = ' . $topic_id . ' and user_id = ' . $user_id . ')) u on 1=1';
+
+                        }
+                    }
+                    else
+                    {
+                        if(isset($timestamp))
+                        {
+                            $sql = "select t.total - u.unread as position, t.total, u.unread
+                        from (
+                        select count(post_id) as total from " . POSTS_TABLE . "
+                        where topic_id = $topic_id and post_visibility = 1) t
+                        left join (
+                        select count(post_id) as unread from " . POSTS_TABLE . "
+                        where topic_id = $topic_id and post_visibility = 1 and post_time > $timestamp) u on 1=1";
+                        }
+                        else
+                        {
+                            $sql = 'select t.total - u.unread as position, t.total, u.unread
+                        from (
+                        select count(post_id) as total from ' . POSTS_TABLE . '
+                        where topic_id = ' . $topic_id . ' and post_visibility = 1) t
+                        left join (
+                        select count(post_id) as unread from ' . POSTS_TABLE . '
+                        where topic_id = ' . $topic_id . ' and post_visibility = 1 and post_time > (select case when MAX(mark_time) is null then 0 else MAX(mark_time) end as mark_time from ' . TOPICS_TRACK_TABLE . ' where topic_id = ' . $topic_id . ' and user_id = ' . $user_id . ')) u on 1=1';
+
+                        }
+                    }
+
+                    $result = $db->sql_query($sql);
+                    $row = $db->sql_fetchrow($result);
+
+                    $objMbqEtForumTopic->firstUnreadPosition->setOriValue($row['position']);
+                    MbqMain::$Cache->Set('MbqEtForumTopic',$topic_id,$objMbqEtForumTopic);
+                    return $objMbqEtForumTopic;
+                }
+                return null;
+            }
         }
+    }
+    public function prepareUsers($topicRows)
+    {
+        $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
+        $userIdsToPreload = array();
+        foreach($topicRows as $row)
+        {
+            if(!in_array($row['topic_poster'], $userIdsToPreload))
+            {
+                $userIdsToPreload[] = $row['topic_poster'];
+            }
+            if(!in_array($row['topic_last_poster_id'], $userIdsToPreload))
+            {
+                $userIdsToPreload[] = $row['topic_last_poster_id'];
+            }
+        }
+        $oMbqRdEtUser->getObjsMbqEtUser($userIdsToPreload, array('case'=>'byUserIds'));
+    }
+    public function prepare($topicRows)
+    {
+        if(!empty($topicRows))
+        {
+            $this->prepareUsers($topicRows);
+            $this->prepareForums($topicRows);
+            $this->preparePostsShortContent($topicRows);
+        }
+    }
+    public function prepareForums($topicRows)
+    {
+        $oMbqRdEtForum = MbqMain::$oClk->newObj('MbqRdEtForum');
+        $forumsToPreload = array();
+        foreach($topicRows as $row)
+        {
+            if(!in_array($row['forum_id'], $forumsToPreload))
+            {
+                $forumsToPreload[] = $row['forum_id'];
+            }
+        }
+        $oMbqRdEtForum->getObjsMbqEtForum($forumsToPreload, array('case'=>'byForumIds'));
+    }
+    public function preparePostsShortContent($topicRows)
+    {
+        global $db;
+        $shortContentToPreload = array();
+        foreach($topicRows as $row)
+        {
+            if(!in_array($row['topic_first_post_id'], $shortContentToPreload))
+            {
+                $shortContentToPreload[] = $row['topic_first_post_id'];
+            }
+            if(!in_array($row['topic_last_post_id'], $shortContentToPreload))
+            {
+                $shortContentToPreload[] = $row['topic_last_post_id'];
+            }
+        }
+        $sql = 'SELECT post_id,post_text,bbcode_uid,bbcode_bitfield
+            FROM ' . POSTS_TABLE . '
+            WHERE post_id in (' . implode(',',$shortContentToPreload) . ')';
+        $result = $db->sql_query($sql);
+        while($row = $db->sql_fetchrow())
+        {
+            MbqMain::$Cache->Set('MbqPostShortContent',$row['post_id'],$row);
+        }
+        $db->sql_freeresult($result);
+
     }
     public function getUrl($oMbqEtForumTopic)
     {

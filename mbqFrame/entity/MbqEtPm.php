@@ -6,7 +6,7 @@ defined('MBQ_IN_IT') or exit;
  * private message class
  */
 Class MbqEtPm extends MbqBaseEntity {
-    
+
     public $msgId;         /* private message id */
     public $toMsgId;        /* It is used in conjunction with "action" parameter to indicate which PM is being replied or forwarded to. */
     public $userNames;      /* To support sending message to multiple recipients, the app constructs an array and insert user_name for each recipient as an element inside the array. */
@@ -24,12 +24,12 @@ Class MbqEtPm extends MbqBaseEntity {
     public $allowSmilies;
     public $canReport;
     public $boxId;
-    
+
     public $oMbqEtPmBox;
     public $oFirstRecipientMbqEtUser;
     public $oAuthorMbqEtUser;
     public $objsRecipientMbqEtUser;   /* users be invited to join this private message */
-    
+
     public function __construct() {
         parent::__construct();
         $this->msgId = clone MbqMain::$simpleV;
@@ -49,12 +49,14 @@ Class MbqEtPm extends MbqBaseEntity {
         $this->allowSmilies = clone MbqMain::$simpleV;
         $this->canReport = clone MbqMain::$simpleV;
         $this->boxId = clone MbqMain::$simpleV;
-        
+
         $this->oMbqEtPmBox = NULL;
         $this->oFirstRecipientMbqEtUser = NULL;
         $this->oAuthorMbqEtUser = NULL;
         $this->objsRecipientMbqEtUser = array();
+        $this->objsMbqEtAtt = array();
+        $this->objsNotInContentMbqEtAtt = array();
     }
-  
+
 }
 

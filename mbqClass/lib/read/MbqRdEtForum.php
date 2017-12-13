@@ -360,6 +360,10 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
     {
         if ($mbqOpt['case'] == 'byForumId') {
             $forumId = $var;
+            if(MbqMain::$Cache->Exists('MbqEtForum',$forumId))
+            {
+                return MbqMain::$Cache->Get('MbqEtForum',$forumId);
+            }
             global $db, $auth, $user, $config, $mobiquo_config, $phpbb_home;
             $forum_filter = " WHERE f.forum_id = $forumId";
             $sql = 'SELECT f.*  FROM ' . FORUMS_TABLE . ' f ' . $forum_filter . '
@@ -368,6 +372,7 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
             if ($row = $db->sql_fetchrow($result))
             {
                 $oMbqEtForum = $this->initOMbqEtForum($row, array('case'=>'byRow'));
+                MbqMain::$Cache->Set('MbqEtForum', $forumId, $oMbqEtForum);
                 return $oMbqEtForum;
             }
             return false;
@@ -377,6 +382,10 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
             global $db, $auth, $user, $config, $mobiquo_config, $phpbb_home;
             $row = $var;
             $forum_id = $row['forum_id'];
+            if(MbqMain::$Cache->Exists('MbqEtForum',$forum_id))
+            {
+                return MbqMain::$Cache->Get('MbqEtForum',$forum_id);
+            }
             $tapatalk_forum_read_only = getTapatalkConfigValue('tapatalk_forum_read_only');
             $read_only_forums = explode(",", $tapatalk_forum_read_only);
             $can_post = true;
@@ -418,6 +427,7 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
             $oMbqEtForum->canUpload->setOriValue($can_upload);
 
             $oMbqEtForum->mbqBind = $row;
+            MbqMain::$Cache->Set('MbqEtForum', $forum_id, $oMbqEtForum);
             return $oMbqEtForum;
         }
     }

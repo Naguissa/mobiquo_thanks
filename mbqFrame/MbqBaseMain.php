@@ -311,6 +311,18 @@ class MbqCallCache
         }
         return null;
     }
+    public function Del($type, $key)
+    {
+        if($this->Exists($type, $key))
+        {
+            $this->cacheHits++;
+            $currentUserId = $this->CurrentUserId();
+            unset($this->callCache[$currentUserId][$type][$key]);
+            $this->cacheObjects--;
+            return true;
+        }
+        return false;
+    }
     public function Reset()
     {
         $this->callCache = array();

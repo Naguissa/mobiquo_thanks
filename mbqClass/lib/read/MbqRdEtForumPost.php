@@ -53,6 +53,7 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
                     $newMbqOpt['oMbqEtUser'] = true;
                     $newMbqOpt['oMbqDataPage'] = $oMbqDataPage;
                     $objsMbqEtForumPost = array();
+                    $this->prepare($post_data);
                     foreach($post_data as $item)
                     {
                         $objsMbqEtForumPost[] = $this->initOMbqEtForumPost($item, $newMbqOpt);
@@ -438,9 +439,9 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
      * @return  Mixed
      */
     public function initOMbqEtForumPost($var, $mbqOpt) {
-		global $db, $auth, $user, $config, $template, $cache, $phpEx, $phpbb_root_path, $phpbb_home, $topic_data, $support_post_thanks;
-		if ($mbqOpt['case'] == 'byPostId') {
-			global $request, $template, $user, $auth, $phpbb_home, $config, $attachment_by_id, $forum_id, $topic_id, $topic_data, $total_posts, $can_subscribe, $post_data;
+        global $db, $auth, $user, $config, $template, $cache, $phpEx, $phpbb_root_path, $phpbb_home, $topic_data, $support_post_thanks;
+        if($mbqOpt['case'] == 'byPostId') {
+            global $request, $template, $user, $auth, $phpbb_home, $config, $attachment_by_id, $forum_id, $topic_id, $topic_data, $total_posts, $can_subscribe, $post_data;
             $topic_data = null;
             $post_data = null;
             $postId = $var;
@@ -629,7 +630,7 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
 										'userid' => $thanker['user_id'],
 										'username' => basic_clean($thanker['username']),
 										'user_type' => check_return_user_type($thanker['user_id']),
-										//'tapatalk'  => new xmlrpcval(is_tapatalk_user($row['user_id']), 'string'),
+										'tapatalk'  => new xmlrpcval(is_tapatalk_user($row['user_id']), 'string'),
 									);
 									$count++;
 								}
@@ -649,30 +650,46 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
 //			$oMbqEtForumPost->canUnthank->setOriValue($var['post_author_id']);
 			$oMbqEtForumPost->isThanked->setOriValue(isset($row['bind']['thanks_info']) && count($row['bind']['thanks_info']));
 			/** COMMENTED END * */
-			if ($mbqOpt['oMbqEtForum'])
-			{
+            if($mbqOpt['oMbqEtForum'])
+            {
                 $oMbqRdEtForum = MbqMain::$oClk->newObj('MbqRdEtForum');
                 $oMbqEtForumPost->oMbqEtForum = $oMbqRdEtForum->initOMbqEtForum($forum_id, array('case' => 'byForumId'));
             }
             if($mbqOpt['oMbqEtForumTopic'])
             {
                 $oMbqRdEtForumTopic = MbqMain::$oClk->newObj('MbqRdEtForumTopic');
-                if ($objsMbqEtForumTopic = $oMbqRdEtForumTopic->getObjsMbqEtForumTopic(array($topic_id), array('case' => 'byTopicIds'))) {
-                    $oMbqEtForumPost->oMbqEtForumTopic = $objsMbqEtForumTopic[0];
-                }
+                $oMbqEtForumPost->oMbqEtForumTopic = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topic_id, array('case' => 'byTopicId'));
             }
             if($mbqOpt['oMbqEtUser'])
             {
                 $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
-               if($objsAuthorMbqEtUser = $oMbqRdEtUser->getObjsMbqEtUser(array($oMbqEtForumPost->postAuthorId->oriValue), array('case' => 'byUserIds')))
-               {
-                   $oMbqEtForumPost->oAuthorMbqEtUser = $objsAuthorMbqEtUser[0];
-               }
+                $oMbqEtForumPost->oAuthorMbqEtUser = $oMbqRdEtUser->initOMbqEtUser($oMbqEtForumPost->postAuthorId->oriValue, array('case' => 'byUserId'));
             }
             $oMbqEtForumPost->mbqBind = $row;
             return $oMbqEtForumPost;
         }
 
+    }
+    public function prepare($postRows)
+    {
+        if(!empty($postRows))
+        {
+            $this->prepareUsers($postRows);
+        }
+    }
+    public function prepareUsers($postRows)
+    {
+        $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
+        $userIdsToPreload = array();
+        foreach($postRows as $row)
+        {
+            $authorId = isset($row['POST_AUTHOR_ID']) ? $row['POST_AUTHOR_ID'] : $row['bind']['user_id'];
+            if(!in_array($authorId, $userIdsToPreload))
+            {
+                $userIdsToPreload[] = $authorId;
+            }
+        }
+        $oMbqRdEtUser->getObjsMbqEtUser($userIdsToPreload, array('case'=>'byUserIds'));
     }
     /**
      * return raw post content

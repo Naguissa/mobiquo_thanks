@@ -48,14 +48,14 @@ Abstract Class MbqBaseActRegister extends MbqBaseAct {
 
 
         $oMbqEtUser = $oMbqRdEtUser->initOMbqEtUser($in->email, array('case' => 'byEmail'));
-        if(isset($oMbqEtUser))
+        if(isset($oMbqEtUser) && !empty($oMbqEtUser))
         {
             $this->data['result'] = false;
             $this->data['result_text'] = 'The email is already in use';
             return;
         }
         $oMbqEtUser = $oMbqRdEtUser->initOMbqEtUser($in->username, array('case' => 'byLoginName'));
-        if(isset($oMbqEtUser))
+        if(isset($oMbqEtUser) && !empty($oMbqEtUser))
         {
             $this->data['result'] = false;
             $this->data['result_text'] = 'The username is already in use';

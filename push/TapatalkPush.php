@@ -392,7 +392,7 @@ Class TapatalkPush extends TapatalkBasePush {
             $data['dateline']    = time();
             $data['author_ip']   = self::getClientIp();
             $data['author_ua']   = self::getClienUserAgent();
-            $data['author_type'] = TT_check_return_user_type($user->data['user_id']);
+            $data['author_type'] = TT_check_return_user_type($user->data);
             $data['authorid']    = $user->data['user_id'];
             $data['author']      = $user->data['username'];
             $data['author_postcount'] = $user->data['user_posts'];

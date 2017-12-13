@@ -48,7 +48,7 @@ Class MbqWrEtPm extends MbqBaseWrEtPm {
         }
         else if ($oMbqEtPm->isForward->oriValue)
         {
-            $action = 'forword';
+            $action = 'forward';
             $msg_id = $oMbqEtPm->toMsgId->oriValue;
             if (!$msg_id) return getSystemString('NO_MESSAGE');
         }
@@ -174,7 +174,7 @@ Class MbqWrEtPm extends MbqBaseWrEtPm {
         }
 
         // Check mass pm to users permission
-        if ((!$config['allow_mass_pm'] || !$auth->acl_get('u_masspm')) && num_recipients($address_list) > 1)
+        if ((!$config['allow_mass_pm'] || !$auth->acl_get('u_masspm')) && num_recipients($address_list) > 1 && $action != 'reply' && $action != 'quote')
         {
             if(function_exists('get_recipients'))
             {

@@ -160,10 +160,11 @@ abstract class MbqBaseStatus
             );
         include_once(MBQ_3RD_LIB_PATH . 'classTTConnection.php');
         $classTTConnection  = new classTTConnection();
-
         $url = 'https://directory.tapatalk.com/au_reg_verify.php';
         $data['test'] = true;
+        $time = microtime(true);
         $response = $classTTConnection->getContentFromSever($url, $data, 'post', false);
+        $result['directory_time'] = round(microtime(true) - $time, 3);
         $result['directory'] = $classTTConnection->success && $response === '1';
         $result['directory_response'] = $classTTConnection->raw_headers . PHP_EOL . PHP_EOL  . $response;
         if(!empty($classTTConnection->warnings))
@@ -177,7 +178,9 @@ abstract class MbqBaseStatus
 
         $url = 'http://push.tapatalk.com/push.php';
         $data['test'] = true;
+        $time = microtime(true);
         $response = $classTTConnection->getContentFromSever($url, $data, 'post', false);
+        $result['push_time'] = round(microtime(true) - $time, 3);
         $result['push'] = $classTTConnection->success && $response === '1';
         $result['push_response'] = $classTTConnection->raw_headers . PHP_EOL . PHP_EOL  . $response;
         if(!empty($classTTConnection->warnings))
@@ -191,7 +194,9 @@ abstract class MbqBaseStatus
 
         $url = 'https://tapatalk.com/plugin_verify.php';
         $data['method'] = 'verify_connection';
+        $time = microtime(true);
         $response = $classTTConnection->getContentFromSever($url, $data, 'post', true);
+        $result['tapatalk_time']= round(microtime(true) - $time, 3);
         $result['tapatalk'] = $classTTConnection->success && $response === '0';
         $result['tapatalk_response'] = $classTTConnection->raw_headers . PHP_EOL . PHP_EOL  . $response;
         if(!empty($classTTConnection->warnings))
@@ -205,7 +210,9 @@ abstract class MbqBaseStatus
 
         $url = 'https://verify.tapatalk.com/plugin_verify.php';
         $data['method'] = 'verify_connection';
+        $time = microtime(true);
         $response = $classTTConnection->getContentFromSever($url, $data, 'post', true);
+        $result['verify_time']= round(microtime(true) - $time, 3);
         $result['verify'] = $classTTConnection->success && $response === '0';
         $result['verify_response'] = $classTTConnection->raw_headers . PHP_EOL . PHP_EOL  . $response;
         if(!empty($classTTConnection->warnings))
@@ -222,7 +229,9 @@ abstract class MbqBaseStatus
             'key' => '00000000000000000000000000',
             'url' => 'http://testconnectivity',
         );
+        $time = microtime(true);
         $response = $classTTConnection->getContentFromSever($url, $data, 'post', true);
+        $result['search_time']= round(microtime(true) - $time, 3);
         $result['search'] = $classTTConnection->success && strpos($response,'{"status":true,"') == 0;
         $result['search_response'] = $classTTConnection->raw_headers . PHP_EOL . PHP_EOL . $response;
         if(!empty($classTTConnection->warnings))
@@ -805,75 +814,75 @@ abstract class MbqBaseStatus
                     if (result.directory) {
                         SetElementHtml('connectivityDirectoryResponse', result.directory_response);
                         if (result.directory_errors == null && result.directory_warnings == null) {
-                            SetSpan('connectivityDirectory', 'green', 'OK!');
+                            SetSpan('connectivityDirectory', 'green', 'OK! ' + result.directory_time + ' seg.');
                         }
                         else {
-                            SetSpan('connectivityDirectory', 'orange', 'OK!, but ' + (result.directory_warnings == null ? '' : result.directory_warnings.join('</br>') + '</br>') + result.directory_errors.join('</br>'));
+                            SetSpan('connectivityDirectory', 'orange', 'OK!, but ' + (result.directory_warnings == null ? '' : result.directory_warnings.join('</br>') + '</br>') + result.directory_errors.join('</br>') + ' ' + result.directory_time + ' seg' );
                             resultConnectivity = SetTestResult(resultConnectivity, 0);
                         }
                     }
                     else {
-                        SetSpan('connectivityDirectory', 'red', 'FAIL! ' + (result.directory_warnings == null ? '' : result.directory_warnings.join('</br>') + '</br>') + result.directory_errors.join('</br>'));
+                        SetSpan('connectivityDirectory', 'red', 'FAIL! ' + (result.directory_warnings == null ? '' : result.directory_warnings.join('</br>') + '</br>') + result.directory_errors.join('</br>')+ ' ' + result.directory_time + ' seg');
                         resultConnectivity = SetTestResult(resultConnectivity, -1);
                     }
 
                     if (result.push) {
                         SetElementHtml('connectivityPushResponse', result.push_response);
                         if (result.push_errors == null && result.push_warnings == null) {
-                            SetSpan('connectivityPush', 'green', 'OK!');
+                            SetSpan('connectivityPush', 'green', 'OK! ' + result.push_time + ' seg.');
                         }
                         else {
-                            SetSpan('connectivityPush', 'orange', 'OK!, but ' + (result.push_warnings == null ? '' : result.push_warnings.join('</br>') + '</br>') + result.push_errors.join('</br>'));
+                            SetSpan('connectivityPush', 'orange', 'OK!, but ' + (result.push_warnings == null ? '' : result.push_warnings.join('</br>') + '</br>') + result.push_errors.join('</br>')+ ' ' + result.push_time + ' seg');
                             resultConnectivity = SetTestResult(resultConnectivity, 0);
                         }
                     }
                     else {
-                        SetSpan('connectivityPush', 'red', 'FAIL! ' + (result.push_warnings == null ? '' : result.push_warnings.join('</br>') + '</br>') + result.push_errors.join('</br>'));
+                        SetSpan('connectivityPush', 'red', 'FAIL! ' + (result.push_warnings == null ? '' : result.push_warnings.join('</br>') + '</br>') + result.push_errors.join('</br>')+ ' ' + result.push_time + ' seg');
                         resultConnectivity = SetTestResult(resultConnectivity, -1);
                     }
 
                     if (result.tapatalk) {
                         SetElementHtml('connectivityTapatalkResponse', result.tapatalk_response);
                         if (result.tapatalk_errors == null && result.tapatalk_warnings == null) {
-                            SetSpan('connectivityTapatalk', 'green', 'OK!');
+                            SetSpan('connectivityTapatalk', 'green', 'OK! ' + result.tapatalk_time + ' seg.');
                         }
                         else {
-                            SetSpan('connectivityTapatalk', 'orange', 'OK!, but ' + (result.tapatalk_warnings == null ? '' : result.tapatalk_warnings.join('</br>') + '</br>') + result.tapatalk_errors.join('</br>'));
+                            SetSpan('connectivityTapatalk', 'orange', 'OK!, but ' + (result.tapatalk_warnings == null ? '' : result.tapatalk_warnings.join('</br>') + '</br>') + result.tapatalk_errors.join('</br>')+ ' ' + result.tapatalk_time + ' seg');
                             resultConnectivity = SetTestResult(resultConnectivity, 0);
                         }
                     }
                     else {
-                        SetSpan('connectivityTapatalk', 'red', 'FAIL! ' + (result.tapatalk_warnings == null ? '' : result.tapatalk_warnings.join('</br>') + '</br>') + result.tapatalk_errors.join('</br>'));
+                        SetSpan('connectivityTapatalk', 'red', 'FAIL! ' + (result.tapatalk_warnings == null ? '' : result.tapatalk_warnings.join('</br>') + '</br>') + result.tapatalk_errors.join('</br>')+ ' ' + result.tapatalk_time + ' seg');
                         resultConnectivity = SetTestResult(resultConnectivity, -1);
                     }
 
                     if (result.verify) {
                         SetElementHtml('connectivityVerifyResponse', result.verify_response);
                         if (result.verify_errors == null && result.verify_warnings == null) {
-                            SetSpan('connectivityVerify', 'green', 'OK!');
+                            SetSpan('connectivityVerify', 'green', 'OK! ' + result.verify_time + ' seg.');
                         }
                         else {
-                            SetSpan('connectivityVerify', 'orange', 'OK!, but ' + (result.verify_warnings == null ? '' : result.verify_warnings.join('</br>') + '</br>') + result.verify_errors.join('</br>'));
+                            SetSpan('connectivityVerify', 'orange', 'OK!, but ' + (result.verify_warnings == null ? '' : result.verify_warnings.join('</br>') + '</br>') + result.verify_errors.join('</br>')+ ' ' + result.verify_time + ' seg');
                             resultConnectivity = SetTestResult(resultConnectivity, 0);
                         }
                     }
                     else {
-                        SetSpan('connectivityVerify', 'red', 'FAIL! ' + (result.verify_warnings == null ? '' : result.verify_warnings.join('</br>') + '</br>') + result.verify_errors.join('</br>'));
+                        SetSpan('connectivityVerify', 'red', 'FAIL! ' + (result.verify_warnings == null ? '' : result.verify_warnings.join('</br>') + '</br>') + result.verify_errors.join('</br>')+ ' ' + result.verify_time + ' seg');
                         resultConnectivity = SetTestResult(resultConnectivity, -1);
                     }
 
                     if (result.search) {
                         SetElementHtml('connectivitySearchResponse', result.search_response);
                         if (result.search_errors == null && result.search_warnings == null) {
-                            SetSpan('connectivitySearch', 'green', 'OK!');
+                            SetSpan('connectivitySearch', 'green', 'OK! ' + result.search_time + ' seg.');
                         }
                         else {
-                            SetSpan('connectivitySearch', 'orange', 'OK!, but ' + (result.search_warnings == null ? '' : result.search_warnings.join('</br>') + '</br>') + result.search_errors.join('</br>'));
+                            SetSpan('connectivitySearch', 'orange', 'OK!, but ' + (result.search_warnings == null ? '' : result.search_warnings.join('</br>') + '</br>') + result.search_errors.join('</br>')+ ' ' + result.search_time + ' seg');
                             resultConnectivity = SetTestResult(resultConnectivity, 0);
                         }
                     }
                     else {
-                        SetSpan('connectivitySearch', 'red', 'FAIL! ' + (result.search_warnings == null ? '' : result.search_warnings.join('</br>') + '</br>') + result.search_errors.join('</br>'));
+                        SetSpan('connectivitySearch', 'red', 'FAIL! ' + (result.search_warnings == null ? '' : result.search_warnings.join('</br>') + '</br>') + result.search_errors.join('</br>')+ ' ' + result.search_time + ' seg');
                         resultConnectivity = SetTestResult(resultConnectivity, -1);
                     }
 

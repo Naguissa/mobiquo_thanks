@@ -16,8 +16,8 @@ Class MbqActSyncUser extends MbqBaseActSyncUser {
     public function actionImplement($in) {
         include_once(MBQ_3RD_LIB_PATH . 'classTTCipherEncrypt.php');
 
-        $userIDs = explode(',', $in->userId);
-      
+        $users = explode(',', $in->userId);
+
         $this->data = array(
             'result'  => false,
             'encrypt' => true,

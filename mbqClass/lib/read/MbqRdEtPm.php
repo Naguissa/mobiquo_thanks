@@ -166,76 +166,6 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
             include_once($phpbb_root_path . 'includes/ucp/ucp_pm_viewfolder.' . $phpEx);
             $folder_info = get_pm_from($folder_id, $folder, $user_id);
 
-            $address_list = array();
-
-            // Build Recipient List if in outbox/sentbox - max two additional queries
-            if ($folder_id == PRIVMSGS_OUTBOX || $folder_id == PRIVMSGS_SENTBOX)
-            {
-                $recipient_list = $address = array();
-
-                foreach ($folder_info['rowset'] as $message_id => $row)
-                {
-                    $address[$message_id] = rebuild_header(array('to' => $row['to_address'], 'bcc' => $row['bcc_address']));
-                    $_save = array('u', 'g');
-                    foreach ($_save as $save)
-                    {
-                        if (isset($address[$message_id][$save]) && sizeof($address[$message_id][$save]))
-                        {
-                            foreach (array_keys($address[$message_id][$save]) as $ug_id)
-                            {
-                                $recipient_list[$save][$ug_id] = array('name' => getSystemString('NA'), 'colour' => '');
-                            }
-                        }
-                    }
-                }
-
-                $_types = array('u', 'g');
-                foreach ($_types as $ug_type)
-                {
-                    if (!empty($recipient_list[$ug_type]))
-                    {
-                        if ($ug_type == 'u')
-                        {
-                            $sql = 'SELECT user_id as id, username as name, user_colour as colour
-                        FROM ' . USERS_TABLE . '
-                        WHERE ';
-                        }
-                        else
-                        {
-                            $sql = 'SELECT group_id as id, group_name as name, group_colour as colour, group_type
-                        FROM ' . GROUPS_TABLE . '
-                        WHERE ';
-                        }
-                        $sql .= $db->sql_in_set(($ug_type == 'u') ? 'user_id' : 'group_id', array_map('intval', array_keys($recipient_list[$ug_type])));
-
-                        $result = $db->sql_query($sql);
-
-                        while ($row = $db->sql_fetchrow($result))
-                        {
-                            if ($ug_type == 'g')
-                            {
-                                $row['name'] = ($row['group_type'] == GROUP_SPECIAL) ? getSystemString('G_' . $row['name']) : $row['name'];
-                            }
-
-                            $recipient_list[$ug_type][$row['id']] = array('id' => $row['id'], 'name' => $row['name'], 'colour' => $row['colour']);
-                        }
-                        $db->sql_freeresult($result);
-                    }
-                }
-
-                foreach ($address as $message_id => $adr_ary)
-                {
-                    foreach ($adr_ary as $type => $id_ary)
-                    {
-                        foreach ($id_ary as $ug_id => $_id)
-                        {
-                            $address_list[$message_id][] = $recipient_list[$type][$ug_id];
-                        }
-                    }
-                }
-                unset($recipient_list, $address);
-            }
-
             // get unread count in inbox only
             if (PRIVMSGS_INBOX === $folder_id)
             {
@@ -250,24 +180,44 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
             } else {
                 $unread_num = 0;
             }
+            if (PRIVMSGS_INBOX === $folder_id)
+            {
+                $sql = 'SELECT COUNT(msg_id) as num_messages
+                FROM ' . PRIVMSGS_TO_TABLE . '
+                WHERE folder_id = ' . PRIVMSGS_INBOX . '
+                    AND user_id = ' . $user->data['user_id'];
+                    $result = $db->sql_query($sql);
+                    $total_num = (int) $db->sql_fetchfield('num_messages');
+                    $db->sql_freeresult($result);
 
-            $sql = 'SELECT COUNT(msg_id) as num_messages
-            FROM ' . PRIVMSGS_TO_TABLE . '
-            WHERE folder_id = ' . $folder_id . '
-                AND user_id = ' . $user->data['user_id'];
-            $result = $db->sql_query($sql);
-            $total_num = (int) $db->sql_fetchfield('num_messages');
-            $db->sql_freeresult($result);
+                    $sql = 'SELECT t.*, p.*, u.username, u.user_avatar, u.user_avatar_type, u.user_id
+                FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+                WHERE t.user_id = $user_id
+                AND p.author_id = u.user_id
+                AND t.folder_id = " . PRIVMSGS_INBOX . "
+                AND t.msg_id = p.msg_id
+                ORDER BY p.message_time DESC";
+                $result = $db->sql_query_limit($sql, $limit, $start);
+            }
+            else
+            {
+                $sql = 'SELECT COUNT(msg_id) as num_messages
+                FROM ' . PRIVMSGS_TO_TABLE . '
+                WHERE folder_id in (' . PRIVMSGS_OUTBOX . ',' . PRIVMSGS_SENTBOX .')
+                    AND user_id = ' . $user->data['user_id'];
+                $result = $db->sql_query($sql);
+                $total_num = (int) $db->sql_fetchfield('num_messages');
+                $db->sql_freeresult($result);
 
-            $sql = 'SELECT t.*, p.*, u.username, u.user_avatar, u.user_avatar_type, u.user_id
-            FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
-            WHERE t.user_id = $user_id
-            AND p.author_id = u.user_id
-            AND t.folder_id = $folder_id
-            AND t.msg_id = p.msg_id
-            ORDER BY p.message_time DESC";
-            $result = $db->sql_query_limit($sql, $limit, $start);
-
+                $sql = 'SELECT t.*, p.*, u.username, u.user_avatar, u.user_avatar_type, u.user_id
+                FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+                WHERE t.user_id = $user_id
+                AND p.author_id = u.user_id
+                AND t.folder_id in (" . PRIVMSGS_OUTBOX . ',' . PRIVMSGS_SENTBOX .")
+                AND t.msg_id = p.msg_id
+                ORDER BY p.message_time DESC";
+                $result = $db->sql_query_limit($sql, $limit, $start);
+            }
             $total_message_count = $total_unread_count = 0;
             $online_cache = array();
             while ($row = $db->sql_fetchrow($result))
@@ -311,27 +261,43 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
             $message_row = array();
 
             // Get Message user want to see
-            if(isset($box_id))
+            if(!isset($box_id))
             {
                 $sql = 'SELECT t.*, p.*, u.*
-            FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
-            WHERE t.msg_id = p.msg_id
-            AND t.folder_id = $box_id
-            AND p.msg_id = $msg_id
-            AND u.user_id = p.author_id";
+                FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+                WHERE t.msg_id = p.msg_id
+                AND p.msg_id = $msg_id
+                AND u.user_id = p.author_id";
+            }
+            else if($box_id == PRIVMSGS_INBOX)
+            {
+                $sql = 'SELECT t.*, p.*, u.*
+                FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+                WHERE t.msg_id = p.msg_id
+                AND t.folder_id = " . PRIVMSGS_INBOX . "
+                AND p.msg_id = $msg_id
+                AND u.user_id = p.author_id";
             }
             else
             {
                 $sql = 'SELECT t.*, p.*, u.*
-            FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
-            WHERE t.msg_id = p.msg_id
-            AND p.msg_id = $msg_id
-            AND u.user_id = p.author_id";
+                FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
+                WHERE t.msg_id = p.msg_id
+                AND t.folder_id != " . PRIVMSGS_INBOX . "
+                AND p.msg_id = $msg_id
+                AND u.user_id = p.author_id";
             }
             $result = $db->sql_query($sql);
             $message_row = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
-
+            if (!$message_row)
+            {
+                //we need a sleep of 2 second because sometimes query is not ready, maybe there is a table lock in some place we need take care off
+                sleep(2);
+                $result = $db->sql_query($sql);
+                $message_row = $db->sql_fetchrow($result);
+                $db->sql_freeresult($result);
+            }
             if (!$message_row) return false;
 
             /*$message_row['message_text'] = preg_replace('/\[b:'.$message_row['bbcode_uid'].'\](.*?)\[\/b:'.$message_row['bbcode_uid'].'\]/si', '[b]$1[/b]', $message_row['message_text']);
@@ -415,63 +381,7 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
 
             $message_row['message_text'] = $message['text'];
             $message_row['attachments'] = $attachments_hash;
-            //$sent_date  = mobiquo_iso8601_encode($message_row['message_time']);
-            //$icon_url   = ($user->optionget('viewavatars')) ? get_user_avatar_url($message_row['user_avatar'], $message_row['user_avatar_type']) : '';
-            //$msg_subject = html_entity_decode(strip_tags(censor_text($message_row['message_subject'])));
-            //$msg_body = post_html_clean(parse_quote($template->_rootref['MESSAGE']));
 
-            //if(!empty($template->_rootref['S_HAS_ATTACHMENTS']))
-            //{
-            //    foreach($template->_tpldata['attachment'] as $attachment)
-            //    {
-            //        if(preg_match('/<img src=\".*?\/(download\/file\.php\?id=(\d+).*?)\"/is', $attachment['DISPLAY_ATTACHMENT'], $matches))
-            //        {
-            //            $attach_id = $matches[2];
-            //            $file_url = basic_clean($phpbb_home.$matches[1]);
-            //            $thumbnail_url = '';
-
-            //            if ($config['img_create_thumbnail'] && preg_match('/\&t=1/is', $file_url))
-            //            {
-            //                $thumbnail_url = $file_url;
-            //                $file_url = preg_replace('/\&t=1/is', '', $thumbnail_url);
-            //            }
-            //            else
-            //            {
-            //                $thumbnail_url = preg_replace('/file\.php\?/is', 'file.php?t=1&', $file_url);
-            //            }
-            //            unset($matches);
-            //            $sql = 'SELECT * FROM ' . ATTACHMENTS_TABLE . " WHERE attach_id = $attach_id	";
-            //            $result = $db->sql_query($sql);
-            //            $attachment_by_id = $db->sql_fetchrow($result);
-            //            if (strpos($attachment_by_id['mimetype'], 'image') === 0)
-            //                $content_type = 'image';
-            //            else
-            //                $content_type = $attachment_by_id['extension'];
-
-            //            $xmlrpc_attachment = new xmlrpcval(array(
-            //                'filename'      => new xmlrpcval($attachment_by_id['real_filename'], 'base64'),
-            //                'filesize'      => new xmlrpcval($attachment_by_id['filesize'], 'int'),
-            //                'content_type'  => new xmlrpcval($content_type),
-            //                'thumbnail_url' => new xmlrpcval($thumbnail_url),
-            //                'url'           => new xmlrpcval($file_url)
-            //            ), 'struct');
-            //            $attachments[] = $xmlrpc_attachment;
-            //        }
-            //    }
-            //}
-            //if ($config['load_onlinetrack']) {
-            //    $sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
-            //    FROM ' . SESSIONS_TABLE . '
-            //    WHERE session_user_id=' . $message_row['user_id'] . '
-            //    GROUP BY session_user_id';
-            //    $result = $db->sql_query($sql);
-            //    $online_info = $db->sql_fetchrow($result);
-
-            //    $update_time = $config['load_online_time'] * 60;
-            //    $is_online = (time() - $update_time < $online_info['online_time'] && (($online_info['viewonline']) || $auth->acl_get('u_viewonline'))) ? true : false;
-            //} else {
-            //    $is_online = false;
-            //}
             return $message_row;
         }
     }
@@ -577,14 +487,14 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
                     if(preg_match('/\[attachment=' . $attachCount  . '\](.*?)\[\/attachment(.*?)\]/si', $message))
                     {
                         $oMbqRdAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
-                        $oMbqEtAtt = $oMbqRdAtt->initOMbqEtAtt($attachment, array('case' => 'byRow'));
+                        $oMbqEtAtt = $oMbqRdAtt->initOMbqEtAtt($attachment['attach_id'], array('case' => 'byAttId'));
                         $message = preg_replace('/\[attachment=' . $attachCount  . '\](.*?)\[\/attachment(.*?)\]/si',  $oMbqEtAtt->contentType->oriValue == MbqBaseFdt::getFdt('MbqFdtAtt.MbqEtAtt.contentType.range.image') ?  '[img]' . $oMbqEtAtt->url->oriValue . '[/img]' : '[url]' . $oMbqEtAtt->url->oriValue . '[/url]',$message);
                         $oMbqEtPm->objsMbqEtAtt[] = $oMbqEtAtt;
                     }
                     else
                     {
                         $oMbqRdAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
-                        $oMbqEtAtt = $oMbqRdAtt->initOMbqEtAtt($attachment, array('case' => 'byRow'));
+                        $oMbqEtAtt = $oMbqRdAtt->initOMbqEtAtt($attachment['attach_id'], array('case' => 'byAttId'));
                         $oMbqEtPm->objsNotInContentMbqEtAtt[] = $oMbqEtAtt;
                     }
                     $attachCount++;

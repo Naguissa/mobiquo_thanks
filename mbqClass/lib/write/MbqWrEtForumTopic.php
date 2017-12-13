@@ -522,7 +522,11 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
         {
             $is_soft = false;
         }
-         $pmaster = new p_master();
+        if(empty($reason))
+        {
+            $reason = 'not specified';
+        }
+        $pmaster = new p_master();
         $mcpMain = new mcp_main($pmaster);
         //setup fake template
         requireExtLibrary('fake_template');

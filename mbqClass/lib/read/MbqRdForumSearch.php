@@ -59,10 +59,15 @@ Class MbqRdForumSearch extends MbqBaseRdForumSearch {
             }
             $db->sql_freeresult($result);
             $newMbqOpt['user_watch_row'] = $user_watch_row;
-
+            $topicRows = array();
             foreach($searchResults as $item)
             {
-               $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($item['bind'], $newMbqOpt);
+                $topicRows[] = $item['bind'];
+            }
+            $oMbqRdEtForumTopic->prepare($topicRows);
+            foreach($topicRows as $topicRow)
+            {
+               $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topicRow, $newMbqOpt);
             }
             $oMbqDataPage->totalNum = $total_match_count;
             return $oMbqDataPage;
@@ -104,9 +109,15 @@ Class MbqRdForumSearch extends MbqBaseRdForumSearch {
             $newMbqOpt['user_watch_row'] = $user_watch_row;
             if(isset($searchResults))
             {
+                $topicRows = array();
                 foreach($searchResults as $item)
                 {
-                    $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($item['bind'], $newMbqOpt);
+                    $topicRows[] = $item['bind'];
+                }
+                $oMbqRdEtForumTopic->prepare($topicRows);
+                foreach($topicRows as $topicRow)
+                {
+                    $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topicRow, $newMbqOpt);
                 }
             }
             $oMbqDataPage->totalNum = $total_match_count;
@@ -150,9 +161,15 @@ Class MbqRdForumSearch extends MbqBaseRdForumSearch {
             $db->sql_freeresult($result);
             $newMbqOpt['user_watch_row'] = $user_watch_row;
 
+            $topicRows = array();
             foreach($searchResults as $item)
             {
-                $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($item['bind'], $newMbqOpt);
+                $topicRows[] = $item['bind'];
+            }
+            $oMbqRdEtForumTopic->prepare($topicRows);
+            foreach($topicRows as $topicRow)
+            {
+                $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topicRow, $newMbqOpt);
             }
             $oMbqDataPage->totalNum = $total_match_count;
             return $oMbqDataPage;
@@ -173,9 +190,16 @@ Class MbqRdForumSearch extends MbqBaseRdForumSearch {
             $newMbqOpt['oMbqEtForum'] = true;
             $newMbqOpt['oMbqEtUser'] = true;
             $newMbqOpt['oMbqDataPage'] = $oMbqDataPage;
-            foreach($template->_tpldata['searchresults'] as $item)
+            $searchResults = $template->_tpldata['searchresults'];
+            $topicRows = array();
+            foreach($searchResults as $item)
             {
-                $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($item['bind'], $newMbqOpt);
+                $topicRows[] = $item['bind'];
+            }
+            $oMbqRdEtForumTopic->prepare($topicRows);
+            foreach($topicRows as $topicRow)
+            {
+                $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topicRow, $newMbqOpt);
             }
             $oMbqDataPage->totalNum = $total_match_count;
             return $oMbqDataPage;
@@ -209,9 +233,10 @@ Class MbqRdForumSearch extends MbqBaseRdForumSearch {
             $newMbqOpt['user_watch_row'] = $user_watch_row;
             if(isset($searchResults))
             {
-                foreach($searchResults as $item)
+                $oMbqRdEtForumTopic->prepare($searchResults);
+                foreach($searchResults as $topicRow)
                 {
-                    $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($item, $newMbqOpt);
+                    $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topicRow, $newMbqOpt);
                 }
             }
             $oMbqDataPage->totalNum = $total_match_count;
@@ -345,9 +370,15 @@ Class MbqRdForumSearch extends MbqBaseRdForumSearch {
                 $newMbqOpt['oMbqEtUser'] = true;
                 if($searchResults)
                 {
+                    $topicRows = array();
                     foreach($searchResults as $item)
                     {
-                        $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($item['bind'], $newMbqOpt);
+                        $topicRows[] = $item['bind'];
+                    }
+                    $oMbqRdEtForumTopic->prepare($topicRows);
+                    foreach($topicRows as $topicRow)
+                    {
+                        $oMbqDataPage->datas[] = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topicRow, $newMbqOpt);
                     }
                 }
                 $oMbqDataPage->totalNum =  $total_match_count ? $total_match_count : 0;
