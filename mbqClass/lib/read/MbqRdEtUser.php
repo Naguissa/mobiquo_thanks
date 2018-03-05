@@ -175,12 +175,9 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         if ($mbqOpt['case'] == 'byUserIds') {
             $result = array();
             $user_ids = implode(',',$var);
-            $sql = "    SELECT u.*,
-                        MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
+            $sql = "    SELECT u.*
                         FROM " . USERS_TABLE . " AS u
-                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
                         WHERE u.user_id in ($user_ids)
-                        GROUP BY u.user_id
                     ";
             $sqlresult = $db->sql_query($sql);
             $userRows = array();
@@ -189,6 +186,22 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                 $userRows[] = $row;
             }
             $db->sql_freeresult($sqlresult);
+
+            if ($config['load_onlinetrack'] && sizeof($user_ids))
+            {
+                $sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
+		FROM ' . SESSIONS_TABLE . '
+		WHERE ' . $db->sql_in_set('session_user_id', $user_ids) . '
+		GROUP BY session_user_id';
+                $result = $db->sql_query($sql);
+
+                $update_time = $config['load_online_time'] * 60;
+                while ($row = $db->sql_fetchrow($result))
+                {
+                    MbqMain::$Cache->Set('MbqEtUserOnline',$row['session_user_id'], (time() - $update_time < $row['online_time'] && (($row['viewonline']) || $auth->acl_get('u_viewonline'))) ? true : false);
+                }
+                $db->sql_freeresult($result);
+            }
             return $this->getObjsMbqEtUser($userRows, array('case'=>'byUserRows'));
         } elseif ($mbqOpt['case'] == 'byUserRows') {
             $userRows = $var;
@@ -324,7 +337,11 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
 
             $oMbqEtUser->postCount->setOriValue($var['user_posts']);
             $oMbqEtUser->userType->setOriValue(TT_check_return_user_type($var, $isCurrentLoggedUser || MbqMain::$cmd == 'get_user_info'));
-            $isOnline = !$config['load_onlinetrack'] || (isset($var['session_viewonline']) && !$var['session_viewonline']) ? false : time() - ($config['load_online_time'] * 60) < $var['session_start'];
+            $isOnline = false;
+            if(MbqMain::$Cache->Exists('MbqEtUserOnline',$var['user_id']))
+            {
+                $isOnline = MbqMain::$Cache->Get('MbqEtUserOnline',$var['user_id']);
+            }
             $oMbqEtUser->isOnline->setOriValue($isOnline);
 
             $oMbqEtUser->canBan->setOriValue($auth->acl_get('m_ban') && $var['user_id'] != $user->data['user_id'] ? true : false);
@@ -455,14 +472,28 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             {
                 return MbqMain::$Cache->Get('MbqEtUser',$user_id);
             }
-            $sql = "    SELECT u.*, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
+            $sql = "    SELECT u.*
                         FROM " . USERS_TABLE . " AS u
-                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
                         WHERE u.user_id = '$user_id'
                     ";
             $result = $db->sql_query($sql);
             $member = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
+            if ($config['load_onlinetrack'])
+            {
+                $sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
+		FROM ' . SESSIONS_TABLE . '
+		WHERE ' . $db->sql_in_set('session_user_id', $user_id) . '
+		GROUP BY session_user_id';
+                $result = $db->sql_query($sql);
+
+                $update_time = $config['load_online_time'] * 60;
+                while ($row = $db->sql_fetchrow($result))
+                {
+                    MbqMain::$Cache->Set('MbqEtUserOnline',$row['session_user_id'], (time() - $update_time < $row['online_time'] && (($row['viewonline']) || $auth->acl_get('u_viewonline'))) ? true : false);
+                }
+                $db->sql_freeresult($result);
+            }
             return $this->initOMbqEtUser($member, array('case'=>'user_row'));
         }
     }
