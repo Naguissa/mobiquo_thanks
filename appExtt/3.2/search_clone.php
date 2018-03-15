@@ -15,7 +15,7 @@
 * @ignore
 */
 
-global $phpbb_root_path, $phpEx, $cache,$phpbb_container,$phpbb_dispatcher, $searchResults, $mobiquo_config, $user, $auth, $db, $template, $request_method, $total_match_count, $request;
+global $phpbb_root_path, $phpEx, $cache,$phpbb_container,$phpbb_dispatcher, $searchResults, $mobiquo_config, $user, $auth, $db, $template, $request_method, $total_match_count, $request, $config;
 //define('IN_PHPBB', true);
 //$phpbb_root_path = (defined('PHPBB_ROOT_PATH')) ? PHPBB_ROOT_PATH : './';
 //$phpEx = substr(strrchr(__FILE__, '.'), 1);
@@ -1186,9 +1186,17 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 				{
 					// post highlighting
 					$row['post_text'] = preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', $row['post_text']);
-					$row['post_subject'] = preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', $row['post_subject']);
+                $row['post_subject'] = preg_replace('#(?!<.*)(?<!\w)(' . $hilit . ')(?!\w|[^<>]*(?:</s(?:cript|tyle))?>)#is', '<span class="posthilit">$1</span>', $row['post_subject']);
 				}
 */
+                $parse_flags = ($row['bbcode_bitfield'] ? OPTION_FLAG_BBCODE : 0) | OPTION_FLAG_SMILIES;
+                $message = $row['post_text'];
+ //               $message = preg_replace('/<URL url=\"(.*?)\"><s>\[URL[^\]]*]<\/s>(.*?)<e>\[\/URL\]<\/e><\/URL>/si', '[url="$1"]$2[/url]', $message);
+ //               $message = preg_replace('/<URL url=\"(.*?)\">(.*?)<\/URL>/si', '[url="$1"]$2[/url]', $message);
+                $rawmessage =  generate_text_for_edit($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
+                $rawmessage = $rawmessage['text'];
+                $message = generate_text_for_display($row['post_text'], $row['bbcode_uid'], $row['bbcode_bitfield'], $parse_flags, true);
+
 				$tpl_ary = array(
 					'POST_AUTHOR_FULL'		=> get_username_string('full', $row['poster_id'], $row['username'], $row['user_colour'], $row['post_username']),
 					'POST_AUTHOR_COLOUR'	=> get_username_string('colour', $row['poster_id'], $row['username'], $row['user_colour'], $row['post_username']),
@@ -1205,7 +1213,8 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 
 					'POST_SUBJECT'		=> $row['post_subject'],
 					'POST_DATE'			=> (!empty($row['post_time'])) ? $row['post_time'] : '',
-					'MESSAGE'			=> $row['post_text'],
+					'MESSAGE'			=> $message,
+                    'RAWMESSAGE'			=> $rawmessage,
                     'bind' => $row,
 				);
 			}

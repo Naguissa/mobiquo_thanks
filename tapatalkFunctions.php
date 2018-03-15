@@ -102,13 +102,20 @@ function get_short_content($post_id, $length = 200)
 
     $post_id = intval($post_id);
     if (empty($post_id)) return '';
-
-    $sql = 'SELECT post_text,bbcode_uid,bbcode_bitfield
+    if(MbqMain::$Cache->Exists('MbqPostShortContent',$post_id))
+    {
+        $row = MbqMain::$Cache->Get('MbqPostShortContent',$post_id);
+    }
+    else
+    {
+        $sql = 'SELECT post_text,bbcode_uid,bbcode_bitfield
             FROM ' . POSTS_TABLE . '
             WHERE post_id = ' . $post_id;
-    $result = $db->sql_query($sql);
-    $row = $db->sql_fetchrow();
-    $db->sql_freeresult($result);
+        $result = $db->sql_query($sql);
+        $row = $db->sql_fetchrow();
+        $db->sql_freeresult($result);
+        MbqMain::$Cache->Set('MbqPostShortContent',$post_id,$row);
+    }
     $message = preg_replace('/<URL url=\"(.*?)\">(.*?)<\/URL>/si', '[url="$1"]$2[/url]', $row['post_text']);
     $message =  generate_text_for_edit($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
     $post_text = tapatalk_process_bbcode($message['text'], $row['bbcode_uid']);
@@ -183,6 +190,33 @@ function post_html_clean($str, $returnHtml = false)
             }
             return '<' . $tag . '>' . $points . '</' . $tag . '><br />';
             }, $str);
+        // add handle smilies [img] not board url
+        if(!function_exists("generate_board_url"))
+        {
+            require_once($phpbb_root_path. '/includes/functions.' . $phpEx);
+        }
+        $str = preg_replace_callback('/\[img\]' . str_replace(array('/','.'), array('\/','\.'), $config["smilies_path"]) . '\/(.*?)\[\/img\]/i', function ($match) {
+            global $config;
+            $url = $match[1];
+            $url = generate_board_url() . '/' . $config["smilies_path"] . '/' . $url;
+            return '<img src="' . trim($url) . '"/>';
+        }, $str);
+
+        $str = preg_replace_callback('/\[img\](\/?)forum_data\/(.*?)(?=smilies)(.*?)\[\/img\]/is', function ($match) {
+            $url = generate_board_url() . '/forum_data/' . $match[2] . $match[3];
+            return '<img src="' . trim($url) . '"/>';
+        }, $str);
+        //#
+        // remove bbcode img Size, e.g:[img=50x50]
+        $str = preg_replace_callback('/\[img\=(.*?)](.*?)\[\/img\]/is', function ($match) {
+            $url = $match[2];
+            return '[img]' . $url . ' [/img]';
+        }, $str);
+        $str = preg_replace_callback('/\[img width=(\d+) height=(\d+)](.*?)\[\/img\]/is', function ($match) {
+            $url = $match[3];
+            return '[img]' . $url . ' [/img]';
+        }, $str);
+
         $str = censor_text($str);
         $str = bbcode_nl2br($str);
         $str = preg_replace_callback('#\[color=(\#[\da-fA-F]{3}|\#[\da-fA-F]{6}|[A-Za-z]{1,20}|rgb\(\d{1,3}, ?\d{1,3}, ?\d{1,3}\))\](.*?)\[/color\]#si', function ($match) { return mobi_color_convert($match[1], $match[2]);}, $str);
@@ -245,6 +279,17 @@ function post_html_clean($str, $returnHtml = false)
             $url =generate_board_url() . '/' . $config["smilies_path"] . '/' . $url;
             return '###img src="'. $url .'?ttinline=true"###';
         }, $str);
+        $str = preg_replace_callback('#<!\-\- s(.*?) \-\-><img src="\{$config["smilies_path"]\}\/([^"]*?)\".*?\/><!\-\- s\1 \-\->#', function ($match) {
+            global $phpbb_root_path, $phpEx, $config;
+            $url = $match[2];
+
+            if(!function_exists("generate_board_url"))
+            {
+                require_once($phpbb_root_path. '/includes/functions.' . $phpEx);
+            }
+            $url =generate_board_url() . '/' . $config["smilies_path"] . '/' . $url;
+            return '###img src="'. $url .'?ttinline=true"###';
+        }, $str);
         $str = preg_replace_callback('/\[img\]' . str_replace(array('/','.'), array('\/','\.'), $config["smilies_path"]) . '\/(.*?)\[\/img\]/i', function ($match) {
             global $phpbb_root_path, $phpEx, $config;
             $url = $match[1];
@@ -271,7 +316,7 @@ function post_html_clean($str, $returnHtml = false)
         $str = preg_replace('/\[img\][^\[\]]+icon_topic_attach\.gif\[\/img\]/si', '', $str);
 
         // change relative path to absolute URL and encode url
-        $str = preg_replace_callback('/\[img\](.*?)\[\/img\]/si', function ($match) { return '[img]'.url_encode($match[1]).'[/img]';}, $str);
+//        $str = preg_replace_callback('/\[img\](.*?)\[\/img\]/si', function ($match) { return '[img]'.url_encode($match[1]).'[/img]';}, $str);
 
         $str = preg_replace('/\[\/img\]\s*/si', "[/img]\n", $str);
 
@@ -284,6 +329,16 @@ function post_html_clean($str, $returnHtml = false)
         $str = preg_replace('/\[url\](http[^\[\]]+\.(jpg|png|bmp|gif))\[\/url\]/si', '[img]$1[/img]', $str);
         $str = preg_replace('/\[url=(http[^\]]+\.(jpg|png|bmp|gif))\]([^\[\]]+)\[\/url\]/si', '[img]$1[/img]', $str);
         $str = preg_replace('/\[font=[^\]]*\]([^\]]*)?\[\/font\]/si', '$1', $str);
+
+        // remove bbcode img Size, e.g:[img=50x50]
+        $str = preg_replace_callback('/\[img\=(.*?)](.*?)\[\/img\]/is', function ($match) {
+            $url = $match[2];
+            return '[img]' . $url . ' [/img]';
+        }, $str);
+        $str = preg_replace_callback('/\[img width=(\d+) height=(\d+)](.*?)\[\/img\]/is', function ($match) {
+            $url = $match[3];
+            return '[img]' . $url . ' [/img]';
+        }, $str);
 
         // cut quote content to 100 charactors
         if (isset($mobiquo_config['shorten_quote']) && $mobiquo_config['shorten_quote'])
@@ -425,7 +480,51 @@ function process_page($start_num, $end)
 
     return array($start, $limit, $page);
 }
+function tapatalk_prepare_smilies_start($message)
+{
+    global $db, $config;
+    $smilies = array();
+    if(MbqMain::$Cache->Exists('','smilies'))
+    {
+        $smilies =MbqMain::$Cache->Get('','smilies');
+    }
+    else
+    {
+        $smilies = array();
+        $sql = 'SELECT *
+						FROM ' . SMILIES_TABLE . '
+						ORDER BY LENGTH(code) DESC';
+        $result = $db->sql_query($sql, 600);
 
+        while ($row = $db->sql_fetchrow($result))
+        {
+            if (empty($row['code']))
+            {
+                continue;
+            }
+            $smilies[] = $row;
+        }
+        MbqMain::$Cache->Set('','smilies', $smilies);
+    }
+    foreach($smilies as $smilie)
+    {
+        if(substr($smilie['smiley_url'], 0, 7) === 'http://')
+        {
+            $replace = '###img src="'. $smilie['smiley_url'] .'?ttinline=true"###';
+		}
+		else
+		{
+    		$replace = '###img src="' . generate_board_url() . '/' . $config['smilies_path'] . '/' . $smilie['smiley_url'] . '?ttinline=true"###';
+        }
+        $message = str_replace("<E>" . $smilie['code'] . "</E>", $replace, $message);
+    }
+    return $message;
+}
+function tapatalk_prepare_smilies_end($message)
+{
+    $message = preg_replace('/###img .*?src=\"(.*?)\".*?\/?###/si', '<img src="$1"/>', $message);
+    return $message;
+}
 function tapatalk_process_bbcode($message, $uid)
 {
     global $user,$config, $phpbb_container;
@@ -612,13 +711,13 @@ function url_encode($url)
     $to   = array(':',     '/',     '?',     ',',     '=',     '&',     '%',     '#',     '+',     ';',     '\\',    ' ');
     $url = preg_replace($from, $to, $url);
     $root_path = preg_replace('/^\//', '', $phpbb_root_path);
-    if($root_path == '/')
+    if($root_path == '/' || $root_path == './')
     {
         $url = preg_replace('#^\.\./|^/#si', '', $url);
     }
     else
     {
-        $url = preg_replace('#^\.\./|^/|'.addslashes($root_path).'#si', '', $url);
+        $url = preg_replace('#^\.\./|^/|^'.addslashes($root_path).'#si', '', $url);
     }
 
     $url = preg_replace('#^.*?(?=download/file\.php)#si', '', $url);
@@ -1235,14 +1334,17 @@ function check_return_user_type($user_id, $is_xmlrpc = true)
     //$session = new user();
     $user_id = intval($user_id);
 
-	// TT_get_user_by_id
+    $user_row = TT_get_user_by_id($user_id);
+
+    //HERE!!
+    /*
     $sql = 'SELECT *
         FROM ' . USERS_TABLE . "
-        WHERE user_id = '" . $db->sql_escape($uid) . "'";
+        WHERE user_id = '" . $db->sql_escape($user_id) . "'";
     $result = $db->sql_query($sql);
     $user_row = $db->sql_fetchrow($result);
     $db->sql_freeresult($result);
-
+*/
     $sql = "SELECT group_name FROM " . USER_GROUP_TABLE . " AS ug LEFT JOIN " .GROUPS_TABLE. " AS g ON ug.group_id = g.group_id WHERE user_id = " . $user_id;
     $query = $db->sql_query($sql);
     $is_ban = $user->check_ban($user_id,false,false,true);
@@ -1450,7 +1552,7 @@ function setTapatalkConfigValue($key, $value)
         if(in_array($key, getTextConfigKeys()))
         {
             $phpbb_container->get('config_text')->set($key, $value);
-            $config->set($key, '');
+            $config->delete($key);
         }
         else
         {

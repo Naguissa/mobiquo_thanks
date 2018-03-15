@@ -439,9 +439,9 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
      * @return  Mixed
      */
     public function initOMbqEtForumPost($var, $mbqOpt) {
-        global $db, $auth, $user, $config, $template, $cache, $phpEx, $phpbb_root_path, $phpbb_home, $topic_data, $support_post_thanks;
+        global $db, $auth, $user, $config, $template, $cache, $phpEx, $phpbb_root_path, $phpbb_home, $topic_data;
         if($mbqOpt['case'] == 'byPostId') {
-            global $request, $template, $user, $auth, $phpbb_home, $config, $attachment_by_id, $forum_id, $topic_id, $topic_data, $total_posts, $can_subscribe, $post_data;
+            global $request, $template, $user, $auth, $phpbb_home, $config, $attachment_by_id, $forum_id, $topic_id, $support_post_thanks, $topic_data, $total_posts, $can_subscribe, $post_data;
             $topic_data = null;
             $post_data = null;
             $postId = $var;

@@ -1569,14 +1569,16 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
     //$message = generate_text_for_display($row['post_text'], $row['bbcode_uid'], $row['bbcode_bitfield'], $parse_flags, true);
     //$message = preg_replace('/<URL url=\"(.*?)\">(.*?)<\/URL>/si', '[url="$1"]$2[/url]', $row['post_text']);
     $message = $row['post_text'];
-    $message = preg_replace('/<URL url=\"(.*?)\"><s>\[URL[^\]]*]<\/s>(.*?)<e>\[\/URL\]<\/e><\/URL>/si', '[url="$1"]$2[/url]', $message);
-    $message = preg_replace('/<URL url=\"(.*?)\">(.*?)<\/URL>/si', '[url="$1"]$2[/url]', $message);
+    //$message = preg_replace('/<URL url=\"(.*?)\"><s>\[URL[^\]]*]<\/s>(.*?)<e>\[\/URL\]<\/e><\/URL>/si', '[url="$1"]$2[/url]', $message);
+    //$message = preg_replace('/<URL url=\"(.*?)\">(.*?)<\/URL>/si', '[url="$1"]$2[/url]', $message);
     $message =  generate_text_for_edit($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
     $message =  tapatalk_process_bbcode($message['text'], $row['bbcode_uid']);
     //$message = generate_text_for_display($row['post_text'], $row['bbcode_uid'], $row['bbcode_bitfield'], $parse_flags, true);
 	//$message = generate_text_for_display($row['post_text'], $row['bbcode_uid'], $row['bbcode_bitfield'], $parse_flags, false);
 
-	if (!empty($attachments[$row['post_id']]))
+
+    $rawMessage =  generate_text_for_edit($row['post_text'], $row['bbcode_uid'], $row['bbcode_bitfield']);
+    if (!empty($attachments[$row['post_id']]))
 	{
 //		parse_attachments($forum_id, $message, $attachments[$row['post_id']], $update_count);
         $row['post_attachments'] = $attachments[$row['post_id']];
@@ -1858,6 +1860,7 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 		'POST_DATE'			=> $user->format_date($row['post_time'], false, ($view == 'print') ? true : false),
 		'POST_SUBJECT'		=> $row['post_subject'],
 		'MESSAGE'			=> $message,
+        'RAWMESSAGE'        => $rawMessage,
 		'SIGNATURE'			=> ($row['enable_sig']) ? $user_cache[$poster_id]['sig'] : '',
 		'EDITED_MESSAGE'	=> $l_edited_by,
 		'EDIT_REASON'		=> $row['post_edit_reason'],
