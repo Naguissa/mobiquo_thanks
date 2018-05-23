@@ -49,6 +49,12 @@ Abstract Class MbqBaseActGetThread extends MbqBaseAct {
                 $oMbqRdEtForumPost = MbqMain::$oClk->newObj('MbqRdEtForumPost');
                 $in->oMbqDataPage = $oMbqRdEtForumPost->getObjsMbqEtForumPost($oMbqEtForumTopic, array('case' => 'byTopic', 'oMbqDataPage' => $in->oMbqDataPage, 'returnHtml' => $in->returnHtml));
                 $this->data = $oMbqRdEtForumTopic->returnApiDataForumTopic($oMbqEtForumTopic);
+                if ($oMbqEtForumTopic->hasPoll->oriValue)
+                {
+                    $oMbqRdEtPoll = MbqMain::$oClk->newObj('MbqRdEtPoll');
+                    $oMbqEtPoll = $oMbqRdEtPoll->initOMbqEtPoll($oMbqEtForumTopic->topicId->oriValue, false);
+                    $this->data['poll'] = $oMbqRdEtPoll->returnApiDataPoll($oMbqEtPoll);
+                }
                 if(isset($oMbqEtForumTopic->oMbqEtForum))
                 {
                     $this->data['forum_name'] = (string) $oMbqEtForumTopic->oMbqEtForum->forumName->oriValue;
@@ -63,10 +69,16 @@ Abstract Class MbqBaseActGetThread extends MbqBaseAct {
                 /* reset forum topic subscription */
                 $oMbqWrEtForumTopic->resetForumTopicSubscription($oMbqEtForumTopic);
             } else {
-                MbqError::alert('', $aclResult, '', MBQ_ERR_APP);
+                if (MbqMain::hasLogin()) {
+                    $reason = ['reason' => MBQ_ERR_NOT_PERMISSION];
+                }else{
+                    $reason = ['reason' => MBQ_ERR_LOGIN_REQUIRED];
+                }
+                MbqError::alert('', $aclResult, $reason, MBQ_ERR_APP);
             }
         } else {
-             MbqError::alert('', "This topic does not exist or you do not have permission to access it!", '', MBQ_ERR_APP);
+            $reason = ['reason' => MBQ_ERR_DATA_NOT_FOUND];
+            MbqError::alert('', "This topic does not exist or you do not have permission to access it!", $reason, MBQ_ERR_APP);
         }
     }
   

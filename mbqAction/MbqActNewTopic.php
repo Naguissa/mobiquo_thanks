@@ -17,7 +17,7 @@ Class MbqActNewTopic extends MbqBaseActNewTopic {
      * action implement
      */
     public function actionImplement($in) {
-        parent::actionImplement($in);
+        return parent::actionImplement($in);
     }
   
 }

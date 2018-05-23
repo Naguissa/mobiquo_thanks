@@ -6,12 +6,15 @@ defined('MBQ_IN_IT') or exit;
  * like class
  */
 Class MbqEtLike extends MbqBaseEntity {
-    
+    /** @var  MbqValue */
     public $key;    /* topicId or postId */
+    /** @var  MbqValue */
     public $userId; /* user id who liked this */
+    /** @var  MbqValue */
     public $type;   /* like forum topic/post or other anything */
+    /** @var  MbqValue */
     public $postTime;   /* timestamp */
-    
+    /** @var MbqEtUser */
     public $oMbqEtUser; /* user who like this */
     
     public function __construct() {

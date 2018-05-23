@@ -23,7 +23,7 @@ Class MbqError {
         if (!$errInfo) $errInfo = MBQ_ERR_DEFAULT_INFO;
         switch ($errDegree) {
             case MBQ_ERR_TOP:
-                MbqMain::$oMbqIo->alert($errInfo, false, $errDegree);
+                MbqMain::$oMbqIo->alert($errInfo, false, $errDegree, $data);
                 exit;
                 break;
             case MBQ_ERR_HIGH:
@@ -35,7 +35,7 @@ Class MbqError {
                 exit;
                 break;
             case MBQ_ERR_APP:
-                MbqMain::$oMbqIo->alert($errInfo, false, $errDegree);
+                MbqMain::$oMbqIo->alert($errInfo, false, $errDegree, $data);
                 exit;
                 break;
             case MBQ_ERR_INFO:

@@ -116,4 +116,54 @@ Class MbqAclEtUser extends MbqBaseAclEtUser {
 
     	return $auth->acl_get('m_ban') == 1;
     }
+
+    /**
+     * get_member_list
+     *
+     * @return bool|string
+     */
+    public function canAclGetMemberList()
+    {
+        global $user,$auth;
+        if (!$auth->acl_gets('u_viewprofile', 'a_user')) {
+            //NO_VIEW_USERS
+            $user->setup(array('memberlist', 'groups'));
+            return $user->lang['NO_VIEW_USERS'];
+        }
+        return true;
+    }
+
+    /**
+     * judge can m_approve_user
+     *
+     * @param  MbqEtUser $oMbqEtUser
+     * @param  Integer  $mode
+     * @return  bool|string
+     */
+    public function canAclMApproveUser($oMbqEtUser, $mode)
+    {
+        global $auth, $user;
+        if (!$auth->acl_get('a_')) {
+            $user->setup('acp/common');
+            return $user->lang['NO_ADMIN'];
+        }
+        return true;
+    }
+
+    /**
+     * judge can m_get_inactive_users
+     *
+     * @return bool|string
+     */
+    public function canAclMGetInactiveUsers()
+    {
+        global $auth, $user;
+        if (!$auth->acl_get('a_')) {
+            $user->setup('acp/common');
+            return $user->lang['NO_ADMIN'];
+        }
+        return true;
+    }
+
+
 }

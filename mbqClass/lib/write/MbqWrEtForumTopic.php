@@ -26,14 +26,11 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
         $attach_list = $oMbqEtForumTopic->attachmentIdArray->hasSetOriValue() ? $oMbqEtForumTopic->attachmentIdArray->oriValue : array();
         $attachment_data = $oMbqEtForumTopic->groupId->hasSetOriValue() ? unserialize(base64_decode($oMbqEtForumTopic->groupId->oriValue)) : array();
         overwriteRequestParam('attachment_data', $attachment_data, \phpbb\request\request_interface::POST);
-        $post_data['quote_username'] = '';
-        $post_data['post_edit_locked']    = 0;
-        $post_data['post_subject']        = '';
-        $post_data['topic_time_limit']    = 0;
-        $post_data['poll_length']        = 0;
-        $post_data['poll_start']        = 0;
-        $post_data['icon_id']            = 0;
-        $post_data['poll_options']        = array();
+        $post_data['quote_username']   = '';
+        $post_data['post_edit_locked'] = 0;
+        $post_data['post_subject']     = '';
+        $post_data['topic_time_limit'] = 0;
+        $post_data['icon_id']          = 0;
 
         include_once($phpbb_root_path . 'includes/message_parser.' . $phpEx);
         $message_parser = new parse_message();
@@ -73,6 +70,10 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
         $message_parser->get_submitted_attachment_data($post_data['poster_id']);
 
         $post_data['username']          = '';
+        // guest new topic
+        if (!$user->data['is_registered'] && isset($post_data['guest_username'])) {
+            $post_data['username'] = $post_data['guest_username'];
+        }
         $post_data['enable_urls']       = $post_data['enable_magic_url'];
         $post_data['enable_sig']        = ($config['allow_sig'] && $user->optionget('attachsig')) ? true: false;
         $post_data['enable_smilies']    = ($config['allow_smilies'] && $user->optionget('smilies')) ? true : false;
@@ -114,11 +115,13 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
         $status_switch = (($post_data['enable_bbcode']+1) << 8) + (($post_data['enable_smilies']+1) << 4) + (($post_data['enable_urls']+1) << 2) + (($post_data['enable_sig']+1) << 1);
         $status_switch = ($status_switch != $check_value);
 
-        $post_data['poll_title']        = utf8_normalize_nfc(request_var('poll_title', '', true));
-        $post_data['poll_length']        = request_var('poll_length', 0);
-        $post_data['poll_option_text']    = utf8_normalize_nfc(request_var('poll_option_text', '', true));
-        $post_data['poll_max_options']    = request_var('poll_max_options', 1);
-        $post_data['poll_vote_change']    = ($auth->acl_get('f_votechg', $forum_id) && isset($_POST['poll_vote_change'])) ? 1 : 0;
+        $post_data['poll_start']       = 0;
+        $post_data['poll_options']     = array();
+        $post_data['poll_title']       = utf8_normalize_nfc(request_var('poll_title', '', true));
+        $post_data['poll_length']      = request_var('poll_length', 0);
+        $post_data['poll_option_text'] = utf8_normalize_nfc(request_var('poll_option_text', '', true));
+        $post_data['poll_max_options'] = request_var('poll_max_options', 1);
+        $post_data['poll_vote_change'] = ($auth->acl_get('f_votechg', $forum_id) && isset($_POST['poll_vote_change'])) ? 1 : 0;
 
         // Parse Attachments - before checksum is calculated
         $message_parser->parse_attachments('fileupload', 'post', $forum_id, true, false, false);
@@ -246,7 +249,51 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
             'topic_status'          => 0,
         );
 
-        $poll = array();
+        $poll = array(
+            'poll_title'        => $post_data['poll_title'],
+            'poll_option_text'  => $post_data['poll_option_text'],
+            'poll_max_options'  => $post_data['poll_max_options'],
+            'poll_vote_change'  => $post_data['poll_vote_change'],
+
+            'poll_start'        => $post_data['poll_start'],
+            'poll_length'       => $post_data['poll_length'],
+
+            'poll_last_vote'    => $post_data['poll_last_vote'],
+
+            'enable_bbcode'     => $post_data['enable_bbcode'],
+            'enable_urls'       => $post_data['enable_urls'],
+            'enable_smilies'    => $post_data['enable_smilies'],
+            'img_status'        => $img_status
+        );
+
+        if (isset($oMbqEtForumTopic->oMbqEtPoll))
+        {
+            $oMbqEtPoll = $oMbqEtForumTopic->oMbqEtPoll;
+            $poll['poll_title'] = $oMbqEtPoll->pollTitle->hasSetOriValue() ? $oMbqEtPoll->pollTitle->oriValue : $poll['poll_title'];
+            $poll['poll_length'] = $oMbqEtPoll->pollLength->hasSetOriValue() ? ($oMbqEtPoll->pollLength->oriValue / 86400) : $poll['poll_length'];
+            $poll['poll_max_options'] = $oMbqEtPoll->pollMaxOptions->hasSetOriValue() ? $oMbqEtPoll->pollMaxOptions->oriValue : $poll['poll_max_options'];
+            $poll['poll_vote_change'] = $oMbqEtPoll->canRevoting->hasSetOriValue() ? $oMbqEtPoll->canRevoting->oriValue : $poll['poll_vote_change'];
+
+            if ($oMbqEtPoll->pollOptions->hasSetOriValue()) {
+                $poll['poll_option_text'] = '';
+                foreach ($oMbqEtPoll->pollOptions->oriValue as $option) {
+                    $poll['poll_option_text'] .= $option . "\n";
+                }
+            }
+
+            $poll['poll_title'] = utf8_normalize_nfc($poll['poll_title']);
+            $poll['poll_option_text'] = utf8_normalize_nfc($poll['poll_option_text']);
+
+            $message_parser->parse_poll($poll);
+        } else {
+            $poll = array();
+        }
+
+        $post_data['poll_options'] = (isset($poll['poll_options'])) ? $poll['poll_options'] : array();
+        $post_data['poll_title'] = (isset($poll['poll_title'])) ? $poll['poll_title'] : '';
+
+
+        // $poll = array();
         include_once($phpbb_root_path . 'includes/functions_posting.' . $phpEx);
 
         $update_message = true;
@@ -489,6 +536,8 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
     public function mRenameTopic($oMbqEtForumTopic, $title) {
         global $db;
 
+        $title = $db->sql_escape($title);
+        $title = truncate_string($title, 120); // the same phpBB
         $sql = "UPDATE " .TOPICS_TABLE ." SET topic_title = '$title' WHERE topic_id = '" . $oMbqEtForumTopic->topicId->oriValue . "' ";
         $db->sql_query($sql);
         $sql = "UPDATE " . POSTS_TABLE . " SET post_subject = '$title' WHERE post_id = '" . $oMbqEtForumTopic->firstPostId->oriValue . "'";

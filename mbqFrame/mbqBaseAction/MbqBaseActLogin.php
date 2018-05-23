@@ -40,28 +40,6 @@ Abstract Class MbqBaseActLogin extends MbqBaseAct {
         if (!MbqMain::$oMbqConfig->moduleIsEnable('user')) {
             MbqError::alert('', "Not support module user!", '', MBQ_ERR_NOT_SUPPORT);
         }
-        $code = '';
-        if(isset($_COOKIE['X-TT']))
-        {
-            $code = trim($_COOKIE['X-TT']);
-        }
-        else if(isset($_SERVER['HTTP_X_TT']))
-        {
-            $code = trim($_SERVER['HTTP_X_TT']);
-        }
-        include_once(MBQ_3RD_LIB_PATH . 'classTTConnection.php');
-        $connection = new classTTConnection();
-        $response = $connection->actionVerification($code, 'login');
-        if($connection->success && $response !== true)
-        {
-            if ($response === false && empty($connection->errors)){
-                $this->data['result_text'] = "Unauthorized app detected.";
-            }
-            else
-            {
-                $this->data['result_text'] = "The site failed to connect to Tapatalk servers and some functions will not work properly. Please contact the forum admin to resolve this issue.";
-            }
-        }
         $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
         $result = $oMbqRdEtUser->login($in->login, $in->password, $in->anonymous, $in->trustCode);
         if ($result === true) {

@@ -56,14 +56,13 @@ class TTSSOBase
         $username = isset($params['username'])? $params['username'] : (isset($params[3]) ? $params[3] : '');
         $password = isset($params['password'])? $params['password'] : (isset($params[4]) ? $params[4] : '');
         $custom_register_fields  = isset($params['custom_register_fields'])? $params['custom_register_fields'] : (isset($params[5]) ? $params[5] : '');
-        $check_spam = isset($params['check_spam']) ? $params['check_spam'] : false;
 
         $this->TTVerify($token, $code);
 
         if ($this->verified)
         {
             $this->setUserInfo($this->TTEmail);
-            
+
             if ($this->userInfo) // user exists, do login
             {
                 $this->loginUser();
@@ -71,7 +70,7 @@ class TTSSOBase
             else
             {
                 $this->register = 1;
-                $this->createUser($this->TTEmail, $username, $password, $custom_register_fields, $check_spam);
+                $this->createUser($this->TTEmail, $username, $password, $custom_register_fields);
                 $this->loginUser();
             }
         }
@@ -79,11 +78,11 @@ class TTSSOBase
         else
         {
             $this->setUserInfo($email);
-            
+
             if ($email && $username && empty($this->userInfo))
             {
                 $this->register = 1;
-                $this->createUser($email, $username, $password, $custom_register_fields, $check_spam);
+                $this->createUser($email, $username, $password, $custom_register_fields);
                 $this->loginUser();
             }
             else if($email && $username && $password && !empty($this->userInfo))
@@ -97,7 +96,7 @@ class TTSSOBase
         }
     }
 
-    public function createUser($email, $username, $password, $custom_register_fields, $check_spam = false)
+    public function createUser($email, $username, $password, $custom_register_fields)
     {
         if (empty($email))
         {
@@ -111,31 +110,25 @@ class TTSSOBase
         }
         else
         {
-            $connection = new classTTConnection();
-            if($check_spam && $connection->checkSpam($email))
+
+            if($this->validateUsername($username))
             {
-                $this->errors[] = 'Your email or IP address matches that of a known spammer and therefore you cannot register here. If you feel this is an error, please contact the administrator or try again later.';
-            }
-            else 
-            {
-                if($this->validateUsername($username))
+                if($password = $this->validatePassword($password, $this->verified))
                 {
-                    if($password = $this->validatePassword($password, $this->verified))
-                    {
-                        $this->userInfo = $this->forumInterface->createUserHandle($email, $username, $password, $this->verified, $custom_register_fields, $this->TTProfile, $this->errors);
-                    }
-                    else
-                    {
-                        $this->status = 2;
-                        $this->errors[] = 'Password does not comply with the password policy set by the forum Administrator.  Please try another.';
-                    }
+                    $this->userInfo = $this->forumInterface->createUserHandle($email, $username, $password, $this->verified, $custom_register_fields, $this->TTProfile, $this->errors);
                 }
                 else
                 {
                     $this->status = 2;
-                    $this->errors[] = 'This username already exists. Please try another.';
+                    $this->errors[] = 'Password does not comply with the password policy set by the forum Administrator.  Please try another.';
                 }
             }
+            else
+            {
+                $this->status = 2;
+                $this->errors[] = 'This username already exists. Please try another.';
+            }
+
         }
     }
 

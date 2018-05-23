@@ -61,21 +61,12 @@ Abstract Class MbqBaseActRegister extends MbqBaseAct {
             $this->data['result_text'] = 'The username is already in use';
             return;
         }
-        $oMbqRdCommon = MbqMain::$oClk->newObj('MbqRdCommon');
-        $check_spam = $oMbqRdCommon->getCheckSpam();
-        if($check_spam)
-        {
-            if (!class_exists('classTTConnection')){
-                include_once(MBQ_3RD_LIB_PATH . 'classTTConnection.php');
-            }
-            $connection = new classTTConnection();
-            if($connection->checkSpam($in->email))
-            {
-                $this->data['result'] = false;
-                $this->data['result_text'] = 'Your email or IP address matches that of a known spammer and therefore you cannot register here. If you feel this is an error, please contact the administrator or try again later.';
-                return;
-            }
-        }
+//        $oMbqRdCommon = MbqMain::$oClk->newObj('MbqRdCommon');
+//        $check_spam = $oMbqRdCommon->getCheckSpam();
+//        if($check_spam)
+//        {
+//            // todo check spammer
+//        }
         if($this->validateUsername($in->username))
         {
             if($password = $this->validatePassword($in->password))

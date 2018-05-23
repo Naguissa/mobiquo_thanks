@@ -76,6 +76,7 @@ Abstract Class MbqBaseRdEtForumPost extends MbqBaseRd {
             }
             if ($oMbqEtForumPost->oAuthorMbqEtUser != null && $oMbqEtForumPost->oAuthorMbqEtUser instanceof MbqEtUser) {
                 $data['post_author_name'] = (string) $oMbqEtForumPost->oAuthorMbqEtUser->getDisplayName();
+            
                 if ($oMbqEtForumPost->authorIconUrl->hasSetOriValue() == false) {
                     $data['icon_url'] = (string) $oMbqEtForumPost->oAuthorMbqEtUser->iconUrl->oriValue;
                 }
@@ -192,9 +193,19 @@ Abstract Class MbqBaseRdEtForumPost extends MbqBaseRd {
             if ($oMbqEtForumPost->editedByTime->hasSetOriValue()) {
                 $data['edit_time'] =  (string) MbqMain::$oMbqCm->datetimeTimestampEncode($oMbqEtForumPost->editedByTime->oriValue);
             }
+            if ($oMbqEtForumPost->showReason->hasSetOriValue()) {
+                $data['show_reason'] = (boolean) $oMbqEtForumPost->showReason->oriValue;
+            }
+            if ($oMbqEtForumPost->editReason->hasSetOriValue()) {
+                $data['edit_reason'] = (string) $oMbqEtForumPost->editReason->oriValue;
+            }
             $this->editedByUserId = clone MbqMain::$simpleV;
             $this->editedByUsername = clone MbqMain::$simpleV;
             $this->editedByTime = clone MbqMain::$simpleV;
+
+            if ($oMbqEtForumPost->clientType->hasSetOriValue()) {
+                $data['client_type'] = $oMbqEtForumPost->clientType->oriValue;
+            }
 
             /* attachments */
             $oMbqRdEtAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
@@ -380,9 +391,19 @@ Abstract Class MbqBaseRdEtForumPost extends MbqBaseRd {
         if ($oMbqEtForumPost->editedByTime->hasSetOriValue()) {
             $data['edit_time'] =  (string) MbqMain::$oMbqCm->datetimeTimestampEncode($oMbqEtForumPost->editedByTime->oriValue);
         }
+        if ($oMbqEtForumPost->showReason->hasSetOriValue()) {
+            $data['show_reason'] = (boolean) $oMbqEtForumPost->showReason->oriValue;
+        }
+        if ($oMbqEtForumPost->editReason->hasSetOriValue()) {
+            $data['edit_reason'] = (string) $oMbqEtForumPost->editReason->oriValue;
+        }
         $this->editedByUserId = clone MbqMain::$simpleV;
         $this->editedByUsername = clone MbqMain::$simpleV;
         $this->editedByTime = clone MbqMain::$simpleV;
+
+        if ($oMbqEtForumPost->clientType->hasSetOriValue()) {
+            $data['client_type'] = $oMbqEtForumPost->clientType->oriValue;
+        }
 
         /* attachments */
         $oMbqRdEtAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
@@ -398,99 +419,7 @@ Abstract Class MbqBaseRdEtForumPost extends MbqBaseRd {
         $data['likes_info'] = (array) $oMbqRdEtLike->returnApiArrDataLike($oMbqEtForumPost->objsMbqEtLike);
         return $data;
     }
-    /**
-     * return forum post json api data
-     *
-     * @param  Object  $oMbqEtForumPost
-     * @return  Array
-     */
-    protected function returnAdvJsonApiDataForumPost($oMbqEtForumPost) {
-        $data = array();
-        if ($oMbqEtForumPost->postId->hasSetOriValue()) {
-            $data['id'] = (string) $oMbqEtForumPost->postId->oriValue;
-        }
-        if ($oMbqEtForumPost->postTime->hasSetOriValue()) {
-            $data['time'] = (int) $oMbqEtForumPost->postTime->oriValue;
-        }
-        if ($oMbqEtForumPost->oAuthorMbqEtUser) {
-            $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
-            $data['author'] = $oMbqRdEtUser->returnApiDataUser($oMbqEtForumPost->oAuthorMbqEtUser);
-        }
-        if ($oMbqEtForumPost->postContent->hasSetTmlDisplayValue()) {
-            $data['content'] = (string) $oMbqEtForumPost->postContent->tmlDisplayValue;
-        }
-        $data['preview'] = (string) $oMbqEtForumPost->shortContent->oriValue;
-        if ($oMbqEtForumPost->allowSmilies->hasSetOriValue()) {
-            $data['smiley_off'] = (boolean) !$oMbqEtForumPost->allowSmilies->oriValue;  //!!!
-        }
-        if ($oMbqEtForumPost->objsNotInContentMbqEtAtt) {
-            $oMbqRdEtAtt = MbqMain::$oClk->newObj('MbqRdEtAtt');
-            $data['attachs'] = (array) $oMbqRdEtAtt->returnApiArrDataAttachment($oMbqEtForumPost->objsNotInContentMbqEtAtt);
-        } else {
-            $data['attachs'] = array();
-        }
-        $data['status'] = array();
-        if ($oMbqEtForumPost->state->hasSetOriValue()) {
-            $data['status']['is_pending'] = (boolean) $oMbqEtForumPost->state->oriValue;   //!!!
-        }
-        if ($oMbqEtForumPost->isDeleted->hasSetOriValue()) {
-            $data['status']['is_deleted'] = (boolean) $oMbqEtForumPost->isDeleted->oriValue;
-        }
-        if ($oMbqEtForumPost->isLiked->hasSetOriValue()) {
-            $data['status']['is_liked'] = (boolean) $oMbqEtForumPost->isLiked->oriValue;
-        }
-        if ($oMbqEtForumPost->isThanked->hasSetOriValue()) {
-            $data['status']['is_thanked'] = (boolean) $oMbqEtForumPost->isThanked->oriValue;
-        }
-        $data['permission'] = array();
-        if ($oMbqEtForumPost->canEdit->hasSetOriValue()) {
-            $data['permission']['can_edit'] = (boolean) $oMbqEtForumPost->canEdit->oriValue;
-        } else {
-            $data['permission']['can_edit'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canEdit.default');
-        }
-        if ($oMbqEtForumPost->canApprove->hasSetOriValue()) {
-            $data['permission']['can_approve'] = (boolean) $oMbqEtForumPost->canApprove->oriValue;
-        } else {
-            $data['permission']['can_approve'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canApprove.default');
-        }
-        if ($oMbqEtForumPost->canDelete->hasSetOriValue()) {
-            $data['permission']['can_delete'] = (boolean) $oMbqEtForumPost->canDelete->oriValue;
-        } else {
-            $data['permission']['can_delete'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canDelete.default');
-        }
-        if ($oMbqEtForumPost->canMove->hasSetOriValue()) {
-            $data['permission']['can_move'] = (boolean) $oMbqEtForumPost->canMove->oriValue;
-        } else {
-            $data['permission']['can_move'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canMove.default');
-        }
-        if ($oMbqEtForumPost->canLike->hasSetOriValue()) {
-            $data['permission']['can_like'] = (boolean) $oMbqEtForumPost->canLike->oriValue;
-        } else {
-            $data['permission']['can_like'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canLike.default');
-        }
-        if ($oMbqEtForumPost->canUnlike->hasSetOriValue()) {
-            $data['permission']['can_unlike'] = (boolean) $oMbqEtForumPost->canUnlike->oriValue;
-        } else {
-            $data['permission']['can_unlike'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canUnlike.default');
-        }
-        if ($oMbqEtForumPost->canThank->hasSetOriValue()) {
-            $data['permission']['can_thank'] = (boolean) $oMbqEtForumPost->canThank->oriValue;
-        } else {
-            $data['permission']['can_thank'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canThank.default');
-        }
-        if ($oMbqEtForumPost->canUnthank->hasSetOriValue()) {
-            $data['permission']['can_unthank'] = (boolean) $oMbqEtForumPost->canUnthank->oriValue;
-        } else {
-            $data['permission']['can_unthank'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canUnthank.default');
-        }
-        if ($oMbqEtForumPost->canReport->hasSetOriValue()) {
-            $data['permission']['can_report'] = (boolean) $oMbqEtForumPost->canReport->oriValue;
-        } else {
-            $data['permission']['can_report'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumPost.canReport.default');
-        }
-        return $data;
-    }
-
+   
     /**
      * return forum post array api data
      *

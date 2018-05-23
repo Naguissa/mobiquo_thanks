@@ -42,7 +42,15 @@ Abstract Class MbqBaseActAvatar extends MbqBaseAct {
             if(isset($userInfo['icon_url']) && !empty($userInfo['icon_url']))
             {
                 $url = $userInfo['icon_url'];
-                header("Location: $url", true, 303);
+                if(preg_match_all('/data:([^;]+);base64,(.*)/', $url, $matches, PREG_SET_ORDER, 0))
+                {
+                    header('Content-Type: ' . $matches[0][1]);
+                    echo base64_decode($matches[0][2]);
+                }
+                else
+                {
+                    header("Location: $url", true, 303);
+                }
             }
             else
             {

@@ -127,15 +127,6 @@ Abstract Class MbqBaseMain {
     }
 
     /**
-     * judge is using json protocol
-     *
-     * @return  Boolean
-     */
-    public static function isAdvJsonProtocol() {
-        return (self::$protocol == 'advjson') ? TRUE : FALSE;
-    }
-
-    /**
      * judge is using xmlrpc protocol
      *
      * @return  Boolean
