@@ -28,31 +28,10 @@ else
 
 }
 
-function TT_addNameValue($name, $value, &$list, $bind){
-    // this statement is fixing the wrong drop down value in the custom field issue
-    if (isset($bind['type']) && ($bind['type'] == 'drop' || $bind['type'] == 'radio') && !empty($bind['options']))
-    {
-        // the following logic compatible with the logic at MbqRdEtUser line 738
-        // we read the dropdown value from the options
-        // the real drop down value is stored in the table PROFILE_FIELDS_LANG_TABLE
-        $options = explode('|', $bind['options']);
-
-        if (is_array($options))
-        {
-            foreach ($options as $v) {
-                $v = explode('=', $v);
-
-                if (isset($v[0]) && isset($v[1]) && $v[0] == $value)
-                {
-                    $realValue = $v[1];
-                }
-            }
-        }
-    }
-
+function TT_addNameValue($name, $value, &$list){
     $list[] = array(
         'name'  => $name,
-        'value' => isset($realValue) ? $realValue : $value
+        'value' => $value
     );
 }
 //checkPluginInitialized();

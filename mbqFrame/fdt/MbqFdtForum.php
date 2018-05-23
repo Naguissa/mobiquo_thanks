@@ -67,13 +67,6 @@ Abstract Class MbqFdtForum extends MbqBaseFdt {
                     'yes' => true,
                     'no' => false
                 )
-            ),
-            'canCreatePoll' => array(
-                'default' => false,
-                'range' => array(
-                    'yes' => true,
-                    'no' => false
-                )
             )
         ),
         'MbqEtForumTopic' => array(

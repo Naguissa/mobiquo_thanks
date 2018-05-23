@@ -128,13 +128,6 @@ Abstract Class MbqFdtUser extends MbqBaseFdt {
                     'mod' => 'mod',
                     'admin' => 'admin',
                 )
-            ),
-            'canActive' => array(
-                'default' => false,
-                'range' => array(
-                    'yes' => true,
-                    'no' => false
-                )
             )
         )
     );

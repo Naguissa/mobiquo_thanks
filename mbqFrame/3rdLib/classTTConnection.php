@@ -224,6 +224,40 @@ if(!class_exists('classTTConnection'))
 
 	    /**
 	     *
+	     * check if a email or ip is spam
+	     * @param string $email
+	     * @param string $ip
+	     * @return bool
+	     */
+	    public function checkSpam($email,$ip='')
+	    {
+	        if($email || $ip)
+	        {
+	            $email = @urlencode($email);
+	            $params = '';
+	            if($email)
+	            {
+	                $params = "&email=$email";
+	            }
+	            if($ip)
+	            {
+	                $params .= "&ip=$ip";
+	            }
+	            $this->timeout = 3;
+	            $url = "http://www.stopforumspam.com/api?f=serial".$params;
+	            $resp = $this->getContentFromSever($url,array(),'get');
+	            $resp = @unserialize($resp);
+	            if((isset($resp['email']['confidence']) && $resp['email']['confidence'] > 50) ||
+	               (isset($resp['ip']['confidence']) && $resp['ip']['confidence'] > 60))
+	            {
+	                return true;
+	            }
+	        }
+	        return false;
+	    }
+
+	    /**
+	     *
 	     * Enter description here ...
 	     * @param array $data
 	     * @param complex $push_slug
@@ -978,7 +1012,7 @@ if(!class_exists('classTTConnection'))
             }
             return $bannerControlData;
         }
-        public function calcSwitchOptions($TT_bannerControlData, &$app_banner_enable, &$google_indexing_enabled)
+        public function calcSwitchOptions($TT_bannerControlData, &$app_banner_enable, &$google_indexing_enabled, &$facebook_indexing_enabled, &$twitter_indexing_enabled)
         {
             if(is_array($TT_bannerControlData)== false){
              	$TT_bannerControlData = array('banner_enable' => -1);
@@ -991,6 +1025,16 @@ if(!class_exists('classTTConnection'))
             if(isset($TT_bannerControlData['google_enable']) && $TT_bannerControlData['google_enable'] != -1) //can connect to tt server and not get empty data
             {
                 $google_indexing_enabled = isset($TT_bannerControlData['google_enable']) ? $TT_bannerControlData['google_enable'] : 1;
+            }
+
+            if(isset($TT_bannerControlData['facebook_enable']) && $TT_bannerControlData['facebook_enable'] != -1) //can connect to tt server and not get empty data
+            {
+                $facebook_indexing_enabled = isset($TT_bannerControlData['facebook_enable']) ? $TT_bannerControlData['facebook_enable'] : 1;
+            }
+
+            if(isset($TT_bannerControlData['twitter_enable']) && $TT_bannerControlData['twitter_enable'] != -1) //can connect to tt server and not get empty data
+            {
+                $twitter_indexing_enabled = isset($TT_bannerControlData['twitter_enable']) ? $TT_bannerControlData['twitter_enable'] : 1;
             }
             return $TT_bannerControlData;
         }

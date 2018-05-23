@@ -13,8 +13,7 @@
  *
  */
 
-global $db,$phpbb_root_path,$phpEx,$user,$phpbb_container,$request,$phpbb_dispatcher,$pagination, $auth, $attachment_by_id,  $support_post_thanks, $topic_data, $total_posts, $can_subscribe, $post_data, $config, $template, $table_prefix, $thanksHelper;
-
+global $db, $phpbb_root_path, $phpEx, $user, $phpbb_container, $request, $phpbb_dispatcher, $pagination, $auth, $attachment_by_id, $support_post_thanks, $topic_data, $total_posts, $can_subscribe, $post_data, $template, $table_prefix, $thanksHelper;
 defined('IN_MOBIQUO') or exit;
 
 //include($phpbb_root_path . 'common.' . $phpEx);

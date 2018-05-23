@@ -274,25 +274,18 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
                 $sql = 'SELECT t.*, p.*, u.*
                 FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
                 WHERE t.msg_id = p.msg_id
-                AND t.folder_id in(" . PRIVMSGS_INBOX . "," . PRIVMSGS_NO_BOX . ")
+                AND t.folder_id = " . PRIVMSGS_INBOX . "
                 AND p.msg_id = $msg_id
-                AND u.user_id = p.author_id
-                AND (t.user_id = " . $user->data['user_id'] . " OR t.author_id = " . $user->data['user_id'] . ")";
+                AND u.user_id = p.author_id";
             }
             else
             {
-                // in PRIVMSGS_TO_TABLE one msg_id has two record,
-                // one if them with user_id = receiver's id and folder_id= 0 (inbox) , another with user_id = sender's id and folder_id = -1(sent box)
-                // author_id on both of them is the sender's id
-                // so despite the folder_id, we can find a correspond record with a msg_id and user_id
-                // something very strange if no parameter 'f' in the url, the box_id will become -1, which should be 0, but we do'nt need the box_id(folder_id) here
                 $sql = 'SELECT t.*, p.*, u.*
                 FROM ' . PRIVMSGS_TO_TABLE . ' t, ' . PRIVMSGS_TABLE . ' p, ' . USERS_TABLE . " u
-                WHERE t.msg_id = p.msg_id ".
-//                AND t.folder_id != " . PRIVMSGS_INBOX . "
-                "AND p.msg_id = $msg_id
-                AND u.user_id = p.author_id
-                AND t.user_id = " . $user->data['user_id'] ;
+                WHERE t.msg_id = p.msg_id
+                AND t.folder_id != " . PRIVMSGS_INBOX . "
+                AND p.msg_id = $msg_id
+                AND u.user_id = p.author_id";
             }
             $result = $db->sql_query($sql);
             $message_row = $db->sql_fetchrow($result);
@@ -384,7 +377,9 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
 
             // Parse the message and subject
             $parse_flags = ($message_row['bbcode_bitfield'] ? OPTION_FLAG_BBCODE : 0) | OPTION_FLAG_SMILIES;
-            $message_row['message_text'] = generate_text_for_display($message_row['message_text'], $message_row['bbcode_uid'], $message_row['bbcode_bitfield'], $parse_flags, true);
+            $message = generate_text_for_edit($message_row['message_text'], $message_row['bbcode_uid'], $parse_flags);
+
+            $message_row['message_text'] = $message['text'];
             $message_row['attachments'] = $attachments_hash;
 
             return $message_row;
@@ -411,14 +406,14 @@ Class MbqRdEtPm extends MbqBaseRdEtPm {
             if ($folder_id == PRIVMSGS_OUTBOX || $folder_id == PRIVMSGS_SENTBOX)
             {
                 $msg_to_list = array();
-                $address = explode(':',$row['to_address']);
+                $address = explode(',',$row['to_address']);
                 foreach($address as $addr)
                 {
                     $toid =  str_replace('u_','',$addr);
-                    //if($user->data['user_id'] != $toid)  // when send you self
-                    //{
+                    if($user->data['user_id'] != $toid)
+                    {
                         $msg_to_list[] = $toid;
-                    //}
+                    }
                 }
             }
             else

@@ -524,8 +524,6 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
                 }
             }
 
-            $message = preg_replace('#\[attachment=([0-9]+)\](.*?)\[\/attachment\]#uis', '\\2', $message);
-
             $message =  preg_replace('/\x1A/', '', $message);
             $messageHtml = post_html_clean($message, true);
             $messageNoHtml = post_html_clean($message, false);
@@ -554,10 +552,6 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
             //$oMbqEtForumPost->isLiked->setOriValue($var['post_author_id']);
             $oMbqEtForumPost->isThanked->setOriValue(isset($row['bind']['thanks_info']));
             //$oMbqEtForumPost->likeCount->setOriValue($var['post_author_id']);
-
-            $oMbqEtForumPost->showReason->setOriValue($auth->acl_get('m_edit', $forum_id));
-            $oMbqEtForumPost->editReason->setOriValue(isset($row['bind']['post_edit_reason']) ? $row['bind']['post_edit_reason'] : '');
-
             if(getPHPBBVersion() == '3.0')
             {
                 $oMbqEtForumPost->isDeleted->setOriValue(false);
@@ -566,7 +560,7 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
             {
                 $oMbqEtForumPost->isDeleted->setOriValue($row['bind']['post_visibility'] == ITEM_DELETED);
             }
-            $oMbqEtForumPost->canDelete->setOriValue($auth->acl_get('m_delete', $forum_id) || ($auth->acl_get('m_softdelete', $forum_id) && $row['bind']['post_visibility'] != ITEM_DELETED));
+            $oMbqEtForumPost->canDelete->setOriValue($auth->acl_get('m_delete', $forum_id));
             $oMbqEtForumPost->isApproved->setOriValue(isset($row['S_POST_UNAPPROVED']) && !$row['S_POST_UNAPPROVED']);
             $oMbqEtForumPost->canApprove->setOriValue($auth->acl_get('m_approve', $forum_id));
             $oMbqEtForumPost->canMove->setOriValue($auth->acl_get('m_split', $forum_id));
@@ -670,10 +664,6 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
             {
                 $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
                 $oMbqEtForumPost->oAuthorMbqEtUser = $oMbqRdEtUser->initOMbqEtUser($oMbqEtForumPost->postAuthorId->oriValue, array('case' => 'byUserId'));
-                if ($oMbqEtForumPost->postAuthorId->oriValue == ANONYMOUS && isset($row['bind']['post_username']) && $row['bind']['post_username']) {
-                    /** @var MbqEtForumPost $oMbqEtForumPost */
-                    $oMbqEtForumPost->postAuthorName->setOriValue($row['bind']['post_username']);
-                }
             }
             $oMbqEtForumPost->mbqBind = $row;
             return $oMbqEtForumPost;
@@ -744,7 +734,7 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
         // Determine some vars
         if (isset($post_data['user_id']) && $post_data['user_id'] == ANONYMOUS)
         {
-            $post_data['quote_username'] = (!empty($post_data['post_username'])) ? $post_data['post_username'] : $user->lang['GUEST'];
+            $post_data['quote_username'] = (!empty($post_data['username'])) ? $post_data['username'] : $user->lang['GUEST'];
         }
         else
         {
@@ -762,11 +752,11 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
 
     public function getUrl($oMbqEtForumPost)
     {
-        global $phpbb_root_path, $phpEx, $db, $auth, $config;
+        global $phpbb_home,$phpEx;
+        $forumId = $oMbqEtForumPost->forumId->oriValue;
+        $topicId = $oMbqEtForumPost->topicId->oriValue;
         $postId = $oMbqEtForumPost->postId->oriValue;
-        $base = new  \tas2580\seourls\event\base($auth, $config, $phpbb_root_path);
-        $topicUrl = $base->generate_topic_link($oMbqEtForumPost->forumId->oriValue, $oMbqEtForumPost->oMbqEtForum->forumName->oriValue, $oMbqEtForumPost->topicId->oriValue, $oMbqEtForumPost->oMbqEtForumTopic->topicTitle->oriValue, 0, true);
-        return $topicUrl . "#p$postId";
+        return append_sid("{$phpbb_home}viewtopic.$phpEx", "f=$forumId&t=$topicId&p=$postId#p$postId");
     }
 
 }

@@ -28,10 +28,6 @@ define('MBQ_ERR_INFO_REGISTRATION_SUCCESS', 'Registration success.');
 define('MBQ_ERR_INFO_NOT_PERMIT_FOR_ADMIN', 'Can not do this action for administrator.');
 define('MBQ_ERR_INFO_NEED_ACHIEVE_IN_INHERITED_CLASSE', 'This method need to be achieved in inherited classe.');
 define('MBQ_RUNNING_NAMEPRE', 'mbqnamepre_'.mt_rand(2000000000, 2100000000).'_');   /* mobiquo running time vars name prefix,for example bbcode names. */
-define('MBQ_ERR_DATA_NOT_FOUND',0);
-define('MBQ_ERR_LOGIN_REQUIRED',1);
-define('MBQ_ERR_NOT_PERMISSION',2); /* current user not permission do something*/
-define('MBQ_ERR_UNKNOWN_REASON',-1);
 /* path constant */
 require_once(MBQ_FRAME_PATH.'MbqError.php');
 require_once(MBQ_FRAME_PATH.'MbqBaseMain.php');
@@ -101,7 +97,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->includeClass('MbqFdtFollow');
         MbqMain::$oClk->includeClass('MbqFdtFeed');
         MbqMain::$oClk->includeClass('MbqFdtAtt');
-        MbqMain::$oClk->includeClass('MbqFdtPoll');
     }
 
     /**
@@ -147,13 +142,11 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqEtReportPm', MBQ_ENTITY_PATH.'MbqEtReportPm.php');
         MbqMain::$oClk->reg('MbqEtPmBox', MBQ_ENTITY_PATH.'MbqEtPmBox.php');
         MbqMain::$oClk->reg('MbqEtSubscribe', MBQ_ENTITY_PATH.'MbqEtSubscribe.php');
-        MbqMain::$oClk->reg('MbqEtSmiley', MBQ_ENTITY_PATH.'MbqEtSmiley.php');
         MbqMain::$oClk->reg('MbqEtThank', MBQ_ENTITY_PATH.'MbqEtThank.php');
         MbqMain::$oClk->reg('MbqEtFollow', MBQ_ENTITY_PATH.'MbqEtFollow.php');
         MbqMain::$oClk->reg('MbqEtLike', MBQ_ENTITY_PATH.'MbqEtLike.php');
         MbqMain::$oClk->reg('MbqEtFeed', MBQ_ENTITY_PATH.'MbqEtFeed.php');
         MbqMain::$oClk->reg('MbqEtAlert', MBQ_ENTITY_PATH.'MbqEtAlert.php');
-        MbqMain::$oClk->reg('MbqEtPoll', MBQ_ENTITY_PATH.'MbqEtPoll.php');
         /* fdt class */
         MbqMain::$oClk->reg('MbqFdtConfig', MBQ_FDT_PATH.'MbqFdtConfig.php');
         MbqMain::$oClk->reg('MbqFdtBase', MBQ_FDT_PATH.'MbqFdtBase.php');
@@ -167,7 +160,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqFdtFollow', MBQ_FDT_PATH.'MbqFdtFollow.php');
         MbqMain::$oClk->reg('MbqFdtFeed', MBQ_FDT_PATH.'MbqFdtFeed.php');
         MbqMain::$oClk->reg('MbqFdtAtt', MBQ_FDT_PATH.'MbqFdtAtt.php');
-        MbqMain::$oClk->reg('MbqFdtPoll', MBQ_FDT_PATH.'MbqFdtPoll.php');
         /* base lib class and lib class */
         /* base read class */
         MbqMain::$oClk->reg('MbqBaseRdCommon', MBQ_BASE_READ_PATH.'MbqBaseRdCommon.php');
@@ -184,7 +176,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqBaseRdEtPc', MBQ_BASE_READ_PATH.'MbqBaseRdEtPc.php');
         MbqMain::$oClk->reg('MbqBaseRdEtPcMsg', MBQ_BASE_READ_PATH.'MbqBaseRdEtPcMsg.php');
         MbqMain::$oClk->reg('MbqBaseRdEtPm', MBQ_BASE_READ_PATH.'MbqBaseRdEtPm.php');
-        MbqMain::$oClk->reg('MbqBaseRdEtPoll', MBQ_BASE_READ_PATH.'MbqBaseRdEtPoll.php');
         /* read class */
         MbqMain::$oClk->reg('MbqRdCommon', MBQ_READ_PATH.'MbqRdCommon.php');
         MbqMain::$oClk->reg('MbqRdEtSocial', MBQ_READ_PATH.'MbqRdEtSocial.php');
@@ -200,7 +191,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqRdEtPc', MBQ_READ_PATH.'MbqRdEtPc.php');
         MbqMain::$oClk->reg('MbqRdEtPcMsg', MBQ_READ_PATH.'MbqRdEtPcMsg.php');
         MbqMain::$oClk->reg('MbqRdEtPm', MBQ_READ_PATH.'MbqRdEtPm.php');
-        MbqMain::$oClk->reg('MbqRdEtPoll', MBQ_READ_PATH.'MbqRdEtPoll.php');
         /* base write class */
         MbqMain::$oClk->reg('MbqBaseWrCommon', MBQ_BASE_WRITE_PATH.'MbqBaseWrCommon.php');
         MbqMain::$oClk->reg('MbqBaseWrEtForumTopic', MBQ_BASE_WRITE_PATH.'MbqBaseWrEtForumTopic.php');
@@ -211,7 +201,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqBaseWrEtPc', MBQ_BASE_WRITE_PATH.'MbqBaseWrEtPc.php');
         MbqMain::$oClk->reg('MbqBaseWrEtPcMsg', MBQ_BASE_WRITE_PATH.'MbqBaseWrEtPcMsg.php');
         MbqMain::$oClk->reg('MbqBaseWrEtPm', MBQ_BASE_WRITE_PATH.'MbqBaseWrEtPm.php');
-        MbqMain::$oClk->reg('MbqBaseWrEtPoll', MBQ_BASE_WRITE_PATH.'MbqBaseWrEtPoll.php');
         /* write class */
         MbqMain::$oClk->reg('MbqWrCommon', MBQ_WRITE_PATH.'MbqWrCommon.php');
         MbqMain::$oClk->reg('MbqWrEtForumTopic', MBQ_WRITE_PATH.'MbqWrEtForumTopic.php');
@@ -222,7 +211,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqWrEtPc', MBQ_WRITE_PATH.'MbqWrEtPc.php');
         MbqMain::$oClk->reg('MbqWrEtPcMsg', MBQ_WRITE_PATH.'MbqWrEtPcMsg.php');
         MbqMain::$oClk->reg('MbqWrEtPm', MBQ_WRITE_PATH.'MbqWrEtPm.php');
-        MbqMain::$oClk->reg('MbqWrEtPoll', MBQ_WRITE_PATH.'MbqWrEtPoll.php');
         /* base acl class */
         MbqMain::$oClk->reg('MbqBaseAclEtForum', MBQ_BASE_ACL_PATH.'MbqBaseAclEtForum.php');
         MbqMain::$oClk->reg('MbqBaseAclEtSocial', MBQ_BASE_ACL_PATH.'MbqBaseAclEtSocial.php');
@@ -233,7 +221,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqBaseAclEtPc', MBQ_BASE_ACL_PATH.'MbqBaseAclEtPc.php');
         MbqMain::$oClk->reg('MbqBaseAclEtPcMsg', MBQ_BASE_ACL_PATH.'MbqBaseAclEtPcMsg.php');
         MbqMain::$oClk->reg('MbqBaseAclEtPm', MBQ_BASE_ACL_PATH.'MbqBaseAclEtPm.php');
-        MbqMain::$oClk->reg('MbqBaseAclEtPoll', MBQ_BASE_ACL_PATH.'MbqBaseAclEtPoll.php');
         /* acl class */
         MbqMain::$oClk->reg('MbqAclEtForum', MBQ_ACL_PATH.'MbqAclEtForum.php');
         MbqMain::$oClk->reg('MbqAclEtSocial', MBQ_ACL_PATH.'MbqAclEtSocial.php');
@@ -244,12 +231,12 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqAclEtPc', MBQ_ACL_PATH.'MbqAclEtPc.php');
         MbqMain::$oClk->reg('MbqAclEtPcMsg', MBQ_ACL_PATH.'MbqAclEtPcMsg.php');
         MbqMain::$oClk->reg('MbqAclEtPm', MBQ_ACL_PATH.'MbqAclEtPm.php');
-        MbqMain::$oClk->reg('MbqAclEtPoll', MBQ_ACL_PATH.'MbqAclEtPoll.php');
          /* I/O class */
         MbqMain::$oClk->reg('MbqIo', MBQ_IO_PATH.'MbqIo.php');
         MbqMain::$oClk->reg('MbqIoInputParser', MBQ_IO_PATH.'MbqIoInputParser.php');
         MbqMain::$oClk->reg('MbqIoHandleXmlrpc', MBQ_IO_HANDLE_PATH.'MbqIoHandleXmlrpc.php');
         MbqMain::$oClk->reg('MbqIoHandleJson', MBQ_IO_HANDLE_PATH.'MbqIoHandleJson.php');
+        MbqMain::$oClk->reg('MbqIoHandleAdvJson', MBQ_IO_HANDLE_PATH.'MbqIoHandleAdvJson.php');
         MbqMain::$oClk->reg('MbqIoHandlePost', MBQ_IO_HANDLE_PATH.'MbqIoHandlePost.php');
         MbqMain::$oClk->reg('MbqIoHandleWeb', MBQ_IO_HANDLE_PATH.'MbqIoHandleWeb.php');
         /* base action class */
@@ -344,7 +331,7 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqBaseActGetQuotePm', MBQ_BASE_ACTION_PATH.'MbqBaseActGetQuotePm.php');
         MbqMain::$oClk->reg('MbqBaseActDeleteMessage', MBQ_BASE_ACTION_PATH.'MbqBaseActDeleteMessage.php');
         MbqMain::$oClk->reg('MbqBaseActMarkPmUnread', MBQ_BASE_ACTION_PATH.'MbqBaseActMarkPmUnread.php');
-        MbqMain::$oClk->reg('MbqBaseActMarkPmRead', MBQ_BASE_ACTION_PATH.'MbqBaseActMarkPmRead.php');
+	MbqMain::$oClk->reg('MbqBaseActMarkPmRead', MBQ_BASE_ACTION_PATH.'MbqBaseActMarkPmRead.php');
         MbqMain::$oClk->reg('MbqBaseActGetThreadByPost', MBQ_BASE_ACTION_PATH.'MbqBaseActGetThreadByPost.php');
         MbqMain::$oClk->reg('MbqBaseActGetThreadByUnread', MBQ_BASE_ACTION_PATH.'MbqBaseActGetThreadByUnread.php');
         MbqMain::$oClk->reg('MbqBaseActSignIn', MBQ_BASE_ACTION_PATH.'MbqBaseActSignIn.php');
@@ -355,13 +342,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqBaseActRegister', MBQ_BASE_ACTION_PATH.'MbqBaseActRegister.php');
         MbqMain::$oClk->reg('MbqBaseActLikePost', MBQ_BASE_ACTION_PATH.'MbqBaseActLikePost.php');
         MbqMain::$oClk->reg('MbqBaseActUnlikePost', MBQ_BASE_ACTION_PATH.'MbqBaseActUnlikePost.php');
-        MbqMain::$oClk->reg('MbqBaseActEditPoll', MBQ_BASE_ACTION_PATH.'MbqBaseActEditPoll.php');
-        MbqMain::$oClk->reg('MbqBaseActVote', MBQ_BASE_ACTION_PATH.'MbqBaseActVote.php');
-        MbqMain::$oClk->reg('MbqBaseActGetVotesList', MBQ_BASE_ACTION_PATH.'MbqBaseActGetVotesList.php');
-        MbqMain::$oClk->reg('MbqBaseActGetMemberList', MBQ_BASE_ACTION_PATH.'MbqBaseActGetMemberList.php');
-        MbqMain::$oClk->reg('MbqBaseActMApproveUser', MBQ_BASE_ACTION_PATH.'MbqBaseActMApproveUser.php');
-        MbqMain::$oClk->reg('MbqBaseActMGetInactiveUsers', MBQ_BASE_ACTION_PATH.'MbqBaseActMGetInactiveUsers.php');
-        MbqMain::$oClk->reg('MbqBaseActGetSmilies', MBQ_BASE_ACTION_PATH.'MbqBaseActGetSmilies.php');
         /*server base action class*/
         MbqMain::$oClk->reg('MbqBaseActSetApiKey', MBQ_BASE_ACTION_PATH.'MbqBaseActSetApiKey.php');
         MbqMain::$oClk->reg('MbqBaseActSetForumInfo', MBQ_BASE_ACTION_PATH.'MbqBaseActSetForumInfo.php');
@@ -472,13 +452,6 @@ Abstract Class MbqBaseConfig {
         MbqMain::$oClk->reg('MbqActRegister', MBQ_ACTION_PATH.'MbqActRegister.php');
         MbqMain::$oClk->reg('MbqActLikePost', MBQ_ACTION_PATH.'MbqActLikePost.php');
         MbqMain::$oClk->reg('MbqActUnlikePost', MBQ_ACTION_PATH.'MbqActUnlikePost.php');
-        MbqMain::$oClk->reg('MbqActEditPoll', MBQ_ACTION_PATH.'MbqActEditPoll.php');
-        MbqMain::$oClk->reg('MbqActVote', MBQ_ACTION_PATH.'MbqActVote.php');
-        MbqMain::$oClk->reg('MbqActGetVotesList', MBQ_ACTION_PATH.'MbqActGetVotesList.php');
-        MbqMain::$oClk->reg('MbqActGetMemberList', MBQ_ACTION_PATH.'MbqActGetMemberList.php');
-        MbqMain::$oClk->reg('MbqActMApproveUser', MBQ_ACTION_PATH.'MbqActMApproveUser.php');
-        MbqMain::$oClk->reg('MbqActMGetInactiveUsers', MBQ_ACTION_PATH.'MbqActMGetInactiveUsers.php');
-        MbqMain::$oClk->reg('MbqActGetSmilies', MBQ_ACTION_PATH.'MbqActGetSmilies.php');
         /*server action class*/
         MbqMain::$oClk->reg('MbqActSetApiKey', MBQ_ACTION_PATH.'MbqActSetApiKey.php');
         MbqMain::$oClk->reg('MbqActSetForumInfo', MBQ_ACTION_PATH.'MbqActSetForumInfo.php');
@@ -549,7 +522,6 @@ Abstract Class MbqBaseConfig {
         $this->cfg['user']['get_smilies'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.user.get_smilies.default')));    /* Return 1 if the plugin support function get_smilies */
         $this->cfg['user']['advanced_online_users'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.user.advanced_online_users.default')));    /* Return 1 if the plugin support get_online_users with forum and thread filter, and also pagination */
         $this->cfg['user']['emoji_support'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.user.emoji_support.default')));    /* Return 1 if the plugin support get_online_users with forum and thread filter, and also pagination */
-        $this->cfg['user']['get_smilies'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.user.get_smilies.default')));    /* Return 1 if the plugin support get_smilies */
         $this->cfg['user']['user_id'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.user.user_id.default')));    /* Indicate the function get_participated_topic / get_user_info / get_user_topic / get_user_reply_post support request with user id. */
         $this->cfg['user']['upload_avatar'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.user.upload_avatar.default')));    /* can upload avatar flag. */
         $this->cfg['user']['sign_in'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.user.sign_in.default')));
@@ -656,6 +628,8 @@ Abstract Class MbqBaseConfig {
         if (MbqMain::isXmlRpcProtocol() || MbqMain::isJsonProtocol() || MbqMain::isRawPostProtocol() || MbqMain::isWebProtocol()) {
             require_once(MBQ_CUSTOM_PATH.'customConfig.php');
             mbqInitGetConfigValues($isTTServerCall);
+        } elseif (MbqMain::isAdvJsonProtocol()) {
+            require_once(MBQ_CUSTOM_PATH.'customAdvConfig.php');
         } else {
             MbqError::alert('', __METHOD__ . ',line:' . __LINE__ . '.' . "Invalid protocol.");
         }

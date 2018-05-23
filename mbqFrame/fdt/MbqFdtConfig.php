@@ -204,13 +204,6 @@ Abstract Class MbqFdtConfig extends MbqBaseFdt {
                     'notSupport' => 0
                 )
             ),
-            'get_smilies' => array(
-              'default' => 0,
-                'range' => array (
-                    'support' => 1,
-                    'notSupport' => 0
-                )
-            ),
             'advanced_online_users' => array(
                 'default' => 0,
                 'range' => array (

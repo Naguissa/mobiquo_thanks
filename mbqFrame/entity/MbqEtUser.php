@@ -55,7 +55,6 @@ Class MbqEtUser extends MbqBaseEntity {
     public $pmUnreadCount;      /* returns total number of private message with unread message inside. */
     public $pcUnreadCount;   /* returns total number of private conversations with unread message inside. */
     public $subscribedTopicUnreadCount; /* returns total number of subscribed topics that are unread. */
-    public $canActive;
     
     
     public function __construct() {
@@ -109,7 +108,6 @@ Class MbqEtUser extends MbqBaseEntity {
         $this->pmUnreadCount = clone MbqMain::$simpleV;
         $this->pcUnreadCount = clone MbqMain::$simpleV;
         $this->subscribedTopicUnreadCount = clone MbqMain::$simpleV;
-        $this->canActive = clone MbqMain::$simpleV;
     }
     
     /**

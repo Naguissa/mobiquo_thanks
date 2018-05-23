@@ -6,11 +6,11 @@ defined('MBQ_IN_IT') or exit;
  * update email
  */
 Abstract Class MbqBaseActUpdateEmail extends MbqBaseAct {
-
+    
     public function __construct() {
         parent::__construct();
     }
-
+    
     function getInput()
     {
         $in = new stdClass();
@@ -26,7 +26,7 @@ Abstract Class MbqBaseActUpdateEmail extends MbqBaseAct {
         }
         return $in;
     }
-
+    
     /**
      * action implement
      */
@@ -35,12 +35,11 @@ Abstract Class MbqBaseActUpdateEmail extends MbqBaseAct {
             MbqError::alert('', "Not support module user!", '', MBQ_ERR_NOT_SUPPORT);
         }
 
-
+       
         $oMbqAclEtUser = MbqMain::$oClk->newObj('MbqAclEtUser');
         $aclResult = $oMbqAclEtUser->canAclUpdateEmail();
         if ($aclResult === true) {
             $oMbqWrEtUser = MbqMain::$oClk->newObj('MbqWrEtUser');
-            $resultMessage = '';
             $result = $oMbqWrEtUser->updateEmail($in->userPassword, $in->userEmail, $resultMessage);
             if($result === true)
             {
@@ -56,5 +55,5 @@ Abstract Class MbqBaseActUpdateEmail extends MbqBaseAct {
             MbqError::alert('', $aclResult, '', MBQ_ERR_APP);
         }
     }
-
+  
 }

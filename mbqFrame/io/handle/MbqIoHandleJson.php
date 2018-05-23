@@ -60,12 +60,7 @@ Class MbqIoHandleJson {
         {
             $this->cmd = $_POST['method_name'];
         }
-
         $this->input = json_decode($data);
-        if(empty($this->cmd) && isset($this->input->method_name))
-        {
-            $this->cmd = $this->input->method_name;
-        }
         $this->input = (object)array_merge((array) $this->input, $_GET);
     }
 
@@ -139,11 +134,6 @@ Class MbqIoHandleJson {
             'result_text'   => $message,
             'error'   => $message,
         );
-        if (is_array($error_detail)) {
-            if (isset($error_detail['reason'])) {
-                $response['reason'] = $error_detail['reason'];
-            }
-        }
 
         echo json_encode($response);
         exit;

@@ -64,9 +64,6 @@ Class MbqEtForumTopic extends MbqBaseEntity {
     public $readTimestamp;
     public $isBan; /*return true if the user has already been banned.*/
     public $canBan; /* return true if the user has authority to ban the first or last post creator, depends on the function return from. E.g. get_unread_topic returns the last post, hence can_ban flag should indicate where the user has the authority to ban the last post creator. */
-    public $hasPoll; /* return true if the topic has poll */
-    public $oMbqEtPoll;
-    public $firstPosterName;
 
     public $oMbqEtForum;
     public $oFirstMbqEtForumPost;
@@ -137,10 +134,7 @@ Class MbqEtForumTopic extends MbqBaseEntity {
         $this->readTimestamp = clone MbqMain::$simpleV;
         $this->isBan = clone MbqMain::$simpleV;
         $this->canBan = clone MbqMain::$simpleV;
-        $this->hasPoll = clone MbqMain::$simpleV;
-        $this->firstPosterName = clone MbqMain::$simpleV;
 
-        $this->oMbqEtPoll = NULL;
         $this->oMbqEtForum = NULL;
         $this->oFirstMbqEtForumPost = NULL;
         $this->oLastMbqEtForumPost = NULL;

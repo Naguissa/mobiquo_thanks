@@ -293,13 +293,6 @@ Abstract Class MbqBaseRdEtForumTopic extends MbqBaseRd {
         if ($oMbqEtForumTopic->isBan->hasSetOriValue()) {
             $data['is_ban'] = (boolean) $oMbqEtForumTopic->isBan->oriValue;
         }
-        if ($oMbqEtForumTopic->hasPoll->hasSetOriValue()) {
-            $data['has_poll'] = (boolean) $oMbqEtForumTopic->hasPoll->oriValue;
-        }
-        if ($oMbqEtForumTopic->oMbqEtPoll != null && $oMbqEtForumTopic->oMbqEtPoll instanceof MbqEtPoll) {
-            $oMbqRdEtPoll = MbqMain::$oClk->newObj('MbqRdEtPoll');
-            $data['poll'] = $oMbqRdEtPoll->returnApiDataPoll($oMbqEtForumTopic->oMbqEtPoll);
-        }
         return $data;
     }
     public function returnJsonApiDataForumTopic($oMbqEtForumTopic) {
@@ -580,7 +573,121 @@ Abstract Class MbqBaseRdEtForumTopic extends MbqBaseRd {
         }
         return $data;
     }
-   
+    /**
+     * return forum topic json api data
+     *
+     * @param  Object  $oMbqEtForumTopic
+     * @return  Array
+     */
+    protected function returnAdvJsonApiDataForumTopic($oMbqEtForumTopic) {
+        $data = array();
+        if ($oMbqEtForumTopic->topicId->hasSetOriValue()) {
+            $data['id'] = (string) $oMbqEtForumTopic->topicId->oriValue;
+        }
+        if ($oMbqEtForumTopic->topicTitle->hasSetOriValue()) {
+            $data['title'] = (string) $oMbqEtForumTopic->topicTitle->oriValue;
+        }
+        if ($oMbqEtForumTopic->postTime->hasSetOriValue()) {
+            $data['time'] = (int) $oMbqEtForumTopic->postTime->oriValue;
+        }
+        if ($oMbqEtForumTopic->replyNumber->hasSetOriValue()) {
+            $data['replies'] = (int) $oMbqEtForumTopic->replyNumber->oriValue;
+        }
+        if ($oMbqEtForumTopic->viewNumber->hasSetOriValue()) {
+            $data['views'] = (int) $oMbqEtForumTopic->viewNumber->oriValue;
+        }
+        if ($oMbqEtForumTopic->oMbqEtForum) {
+            $oMbqRdEtForum = MbqMain::$oClk->newObj('MbqRdEtForum');
+            $data['forum'] = $oMbqRdEtForum->returnApiDataForum($oMbqEtForumTopic->oMbqEtForum);
+        }
+        if ($oMbqEtForumTopic->oAuthorMbqEtUser) {
+            $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
+            $data['author'] = $oMbqRdEtUser->returnApiDataUser($oMbqEtForumTopic->oAuthorMbqEtUser);
+        }
+        if ($oMbqEtForumTopic->prefixId->hasSetOriValue() && $oMbqEtForumTopic->prefixName->hasSetOriValue()) {
+            $data['prefix'] = array('id' => $oMbqEtForumTopic->prefixId->oriValue, 'name' => $oMbqEtForumTopic->prefixName->oriValue);
+        }
+        $data['status'] = array();
+        if ($oMbqEtForumTopic->newPost->hasSetOriValue()) {
+            $data['status']['is_unread'] = (boolean) $oMbqEtForumTopic->newPost->oriValue;
+        }
+        if ($oMbqEtForumTopic->isSubscribed->hasSetOriValue()) {
+            $data['status']['is_follow'] = (boolean) $oMbqEtForumTopic->isSubscribed->oriValue;
+        }
+        if ($oMbqEtForumTopic->isHot->hasSetOriValue()) {
+            $data['status']['is_hot'] = (boolean) $oMbqEtForumTopic->isHot->oriValue;
+        }
+        if ($oMbqEtForumTopic->isDigest->hasSetOriValue()) {
+            $data['status']['is_digest'] = (boolean) $oMbqEtForumTopic->isDigest->oriValue;
+        }
+        if ($oMbqEtForumTopic->isClosed->hasSetOriValue()) {
+            $data['status']['is_closed'] = (boolean) $oMbqEtForumTopic->isClosed->oriValue;
+        }
+        if ($oMbqEtForumTopic->isSticky->hasSetOriValue()) {
+            $data['status']['is_sticky'] = (boolean) $oMbqEtForumTopic->isSticky->oriValue;
+        }
+        if ($oMbqEtForumTopic->state->hasSetOriValue()) {
+            $data['status']['is_pending'] = (boolean) $oMbqEtForumTopic->state->oriValue;   //!!!
+        }
+        if ($oMbqEtForumTopic->isDeleted->hasSetOriValue()) {
+            $data['status']['is_deleted'] = (boolean) $oMbqEtForumTopic->isDeleted->oriValue;
+        }
+        $data['permission'] = array();
+        if ($oMbqEtForumTopic->canReply->hasSetOriValue()) {
+            $data['permission']['can_reply'] = (boolean) $oMbqEtForumTopic->canReply->oriValue;
+        } else {
+            $data['permission']['can_reply'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canReply.default');
+        }
+        if ($oMbqEtForumTopic->canRename->hasSetOriValue()) {
+            $data['permission']['can_edit'] = (boolean) $oMbqEtForumTopic->canRename->oriValue;
+        } else {
+            $data['permission']['can_edit'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canRename.default');
+        }
+        if ($oMbqEtForumTopic->canSubscribe->hasSetOriValue()) {
+            $data['permission']['can_follow'] = (boolean) $oMbqEtForumTopic->canSubscribe->oriValue;
+        } else {
+            $data['permission']['can_follow'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canSubscribe.default');
+        }
+        if ($oMbqEtForumTopic->canClose->hasSetOriValue()) {
+            $data['permission']['can_close'] = (boolean) $oMbqEtForumTopic->canClose->oriValue;
+        } else {
+            $data['permission']['can_close'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canClose.default');
+        }
+        if ($oMbqEtForumTopic->canStick->hasSetOriValue()) {
+            $data['permission']['can_stick'] = (boolean) $oMbqEtForumTopic->canStick->oriValue;
+        } else {
+            $data['permission']['can_stick'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canStick.default');
+        }
+        if ($oMbqEtForumTopic->canApprove->hasSetOriValue()) {
+            $data['permission']['can_approve'] = (boolean) $oMbqEtForumTopic->canApprove->oriValue;
+        } else {
+            $data['permission']['can_approve'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canApprove.default');
+        }
+        if ($oMbqEtForumTopic->canDelete->hasSetOriValue()) {
+            $data['permission']['can_delete'] = (boolean) $oMbqEtForumTopic->canDelete->oriValue;
+        } else {
+            $data['permission']['can_delete'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canDelete.default');
+        }
+        if ($oMbqEtForumTopic->canMove->hasSetOriValue()) {
+            $data['permission']['can_move'] = (boolean) $oMbqEtForumTopic->canMove->oriValue;
+        } else {
+            $data['permission']['can_move'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canMove.default');
+        }
+        if ($oMbqEtForumTopic->canMerge->hasSetOriValue()) {
+            $data['permission']['can_merge'] = (boolean) $oMbqEtForumTopic->canMerge->oriValue;
+        } else {
+            $data['permission']['can_merge'] = (boolean) MbqBaseFdt::getFdt('MbqFdtForum.MbqEtForumTopic.canMerge.default');
+        }
+        $oMbqRdEtForumPost = MbqMain::$oClk->newObj('MbqRdEtForumPost');
+        if ($oMbqEtForumTopic->oFirstMbqEtForumPost) {
+            $data['first_post'] = $oMbqRdEtForumPost->returnApiDataForumPost($oMbqEtForumTopic->oFirstMbqEtForumPost);
+        }
+        if ($oMbqEtForumTopic->oLastMbqEtForumPost) {
+            $data['last_post'] = $oMbqRdEtForumPost->returnApiDataForumPost($oMbqEtForumTopic->oLastMbqEtForumPost);
+        }
+        return $data;
+    }
+
     /**
      * return forum topic array api data
      *

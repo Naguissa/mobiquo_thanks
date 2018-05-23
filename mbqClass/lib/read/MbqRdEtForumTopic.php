@@ -720,10 +720,6 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
             }
             $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
             $oMbqEtForumTopic->oAuthorMbqEtUser = $oMbqRdEtUser->initOMbqEtUSer($row['topic_poster'], array('case' => 'byUserId'));
-            if ((int)$row['topic_poster'] == 0 && isset($row['topic_first_poster_name']) && $row['topic_first_poster_name']) {
-                /** @var MbqEtForumTopic $oMbqEtForumTopic */
-                $oMbqEtForumTopic->firstPosterName->setOriValue($row['topic_first_poster_name']);
-            }
             $oMbqEtForumTopic->oLastReplyMbqEtUser = $oMbqRdEtUser->initOMbqEtUSer($row['topic_last_poster_id'], array('case' => 'byUserId'));
 
             $oMbqEtForumTopic->authorIconUrl->setOriValue($oMbqEtForumTopic->oAuthorMbqEtUser->iconUrl->oriValue);
@@ -743,7 +739,7 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
             $oMbqEtForumTopic->replyNumber->setOriValue($replies-1);
             $oMbqEtForumTopic->newPost->setOriValue($new_post);
             $oMbqEtForumTopic->canRename->setOriValue($can_rename);
-            $oMbqEtForumTopic->canReply->setOriValue($auth->acl_get('f_reply', $forum_id) && ($auth->acl_get('m_edit', $forum_id) || ($oMbqEtForumTopic->oMbqEtForum->mbqBind['forum_status'] != ITEM_LOCKED && $row['topic_status'] != ITEM_LOCKED)));
+            $oMbqEtForumTopic->canReply->setOriValue($auth->acl_get('f_reply', $forum_id) &&  $oMbqEtForumTopic->oMbqEtForum->mbqBind['forum_status'] != ITEM_LOCKED && $row['topic_status'] != ITEM_LOCKED);
             $oMbqEtForumTopic->isSticky->setOriValue($row['topic_type'] == POST_STICKY);
             $oMbqEtForumTopic->canStick->setOriValue($auth->acl_get('f_sticky', $forum_id));
 	    	if(getPHPBBVersion() == '3.0')
@@ -768,9 +764,6 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
             $oMbqEtForumTopic->realTopicId->setOriValue($row['topic_moved_id'] ? $row['topic_moved_id'] : $row['topic_id']);
             $oMbqEtForumTopic->canBan->setOriValue($auth->acl_get('m_ban') && $row['topic_poster'] != $user->data['user_id']);
             $oMbqEtForumTopic->canMerge->setOriValue($auth->acl_get('m_merge', $forum_id));
-
-            $oMbqEtForumTopic->hasPoll->setOriValue($row['poll_start'] ? 1 : 0);
-
 
             if(isset($mbqOpt['oMbqEtUser']))
             {
@@ -929,9 +922,9 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
     }
     public function getUrl($oMbqEtForumTopic)
     {
-        global $phpbb_root_path, $phpEx, $db, $auth, $config;
-        $base = new  \tas2580\seourls\event\base($auth, $config, $phpbb_root_path);
-        $topicUrl = $base->generate_topic_link($oMbqEtForumTopic->forumId->oriValue, $oMbqEtForumTopic->oMbqEtForum->forumName->oriValue, $oMbqEtForumTopic->topicId->oriValue, $oMbqEtForumTopic->topicTitle->oriValue, 0, true);
-        return $topicUrl;//append_sid("{$phpbb_home}viewtopic.$phpEx", "f=$forumId&t=$topicId");
+        global $phpbb_home,$phpEx;
+        $forumId = $oMbqEtForumTopic->forumId->oriValue;
+        $topicId = $oMbqEtForumTopic->topicId->oriValue;
+        return append_sid("{$phpbb_home}viewtopic.$phpEx", "f=$forumId&t=$topicId");
     }
 }

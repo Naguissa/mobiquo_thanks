@@ -59,24 +59,9 @@ Class MbqIoHandleXmlrpc {
         }
         if($data != '')
         {
-            $originalLocales = explode(";", setlocale(LC_ALL, 0));
-            setlocale(LC_ALL, "C");
-
             $parsers = php_xmlrpc_decode_xml($data);
             $this->cmd = $parsers->methodname;
             $this->input = php_xmlrpc_decode(new xmlrpcval($parsers->params, 'array'));
-
-            foreach ($originalLocales as $localeSetting) {
-                if (strpos($localeSetting, "=") !== false) {
-                    list ($category, $locale) = explode("=", $localeSetting);
-                }
-                else {
-                    $category = LC_ALL;
-                    $locale   = $localeSetting;
-                }
-                setlocale($category, $locale);
-            }
-
         }
     }
 
@@ -126,20 +111,10 @@ Class MbqIoHandleXmlrpc {
     public static function alert($message, $result = false, $errorCode = NULL, $error_detail='') {
         header('Content-Type: text/xml');
         self::resetGlobals();
-        $result_reason = -2;
-        if (is_array($error_detail) && isset($error_detail['reason'])) {
-            $result_reason = $error_detail['reason'];
-            if (isset($error_detail['error'])) {
-                $error_detail = $error_detail['error'];
-            }else{
-                $error_detail = '';
-            }
-        }
         $response = new xmlrpcresp(new xmlrpcval(array(
             'result'        => new xmlrpcval($result, 'boolean'),
             'result_text'   => new xmlrpcval(print_r($message, true), 'base64'),
-	        'error'         => new xmlrpcval($error_detail, 'base64'),
-            'result_reason' => new xmlrpcval($result_reason, 'int')
+	    'error'         => new xmlrpcval($error_detail, 'base64')
         ), 'struct'));
         if (ob_get_length()) ob_end_clean();
         echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n".$response->serialize('UTF-8');
@@ -168,7 +143,6 @@ Class MbqIoHandleXmlrpc {
             'name',
             'post_author_name',
             'post_content',
-            'edit_reason',
             'post_content_original',
             'filename',
             'post_title',
@@ -190,8 +164,7 @@ Class MbqIoHandleXmlrpc {
             'email',
             'user_type',
             'options',
-            'DEBUG_ERROR',
-            'text'
+            'DEBUG_ERROR'
         );
 
         // compatibility fix, 'delete_reason' should be string in get_config, and base64 in others

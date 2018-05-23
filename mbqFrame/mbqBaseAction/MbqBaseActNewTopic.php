@@ -6,11 +6,11 @@ defined('MBQ_IN_IT') or exit;
  * new_topic action
  */
 Abstract Class MbqBaseActNewTopic extends MbqBaseAct {
-
+    
     public function __construct() {
         parent::__construct();
     }
-
+    
     function getInput()
     {
         $in = new stdClass();
@@ -22,7 +22,6 @@ Abstract Class MbqBaseActNewTopic extends MbqBaseAct {
             $in->prefixId = $this->getInputParam('prefixId');
             $in->attachmentIds = $this->getInputParam('attachmentIds');
             $in->groupId = $this->getInputParam('groupId');
-            $in->poll = $this->getInputParam('poll');
         }
         else
         {
@@ -32,11 +31,10 @@ Abstract Class MbqBaseActNewTopic extends MbqBaseAct {
             $in->prefixId = $this->getInputParam(3);
             $in->attachmentIds = $this->getInputParam(4);
             $in->groupId = $this->getInputParam(5);
-            $in->poll = $this->getInputParam(6);
         }
         return $in;
     }
-
+    
     /**
      * action implement
      */
@@ -45,7 +43,7 @@ Abstract Class MbqBaseActNewTopic extends MbqBaseAct {
             MbqError::alert('', "Not support module forum!", '', MBQ_ERR_NOT_SUPPORT);
         }
         $oMbqEtForumTopic = MbqMain::$oClk->newObj('MbqEtForumTopic');
-
+      
         $oMbqEtForumTopic->forumId->setOriValue($in->forumId);
         $oMbqEtForumTopic->topicTitle->setOriValue($in->subject);
         $oMbqEmoji = MbqMain::$oClk->newObj('MbqEmoji');
@@ -54,18 +52,7 @@ Abstract Class MbqBaseActNewTopic extends MbqBaseAct {
         $oMbqEtForumTopic->prefixId->setOriValue($in->prefixId);
         if (isset($in->attachmentIds)) $oMbqEtForumTopic->attachmentIdArray->setOriValue($in->attachmentIds);
         if (isset($in->groupId)) $oMbqEtForumTopic->groupId->setOriValue($in->groupId);
-        if (isset($in->poll)) {
-            $oMbqEtPoll = MbqMain::$oClk->newObj('MbqEtPoll');
-            $oMbqEtPoll->pollTitle->setOriValue($in->poll['title']);
-            $oMbqEtPoll->pollOptions->setOriValue($in->poll['options']);
-            $oMbqEtPoll->pollLength->setOriValue($in->poll['length']);
-            $oMbqEtPoll->pollMaxOptions->setOriValue($in->poll['max_options'] ? $in->poll['max_options'] : 1);
-            $oMbqEtPoll->canRevoting->setOriValue($in->poll['can_revoting'] ? $in->poll['can_revoting'] : false);
-            $oMbqEtPoll->canViewBeforeVote->setOriValue($in->poll['can_view_before_vote'] ? $in->poll['can_view_before_vote'] : false);
-            $oMbqEtPoll->canPublic->setOriValue($in->poll['can_public'] ? $in->poll['can_public'] : false);
-            $oMbqEtForumTopic->oMbqEtPoll = $oMbqEtPoll;
-        }
-
+      
         $oMbqRdEtForum = MbqMain::$oClk->newObj('MbqRdEtForum');
         if ($oMbqEtForum = $oMbqRdEtForum->initOMbqEtForum($oMbqEtForumTopic->forumId->oriValue, array('case' => 'byForumId'))) {
             $oMbqAclEtForumTopic = MbqMain::$oClk->newObj('MbqAclEtForumTopic');
@@ -85,7 +72,6 @@ Abstract Class MbqBaseActNewTopic extends MbqBaseAct {
                     $oTapatalkPush->callMethod('doInternalPushNewTopic', array(
                         'oMbqEtForumTopic' => $result
                     ));
-                    return $result;
                 }
                 else
                 {
@@ -98,5 +84,5 @@ Abstract Class MbqBaseActNewTopic extends MbqBaseAct {
             MbqError::alert('', "Need valid forum id!", '', MBQ_ERR_APP);
         }
     }
-
+    
 }

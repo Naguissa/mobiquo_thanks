@@ -145,34 +145,9 @@ Class MbqWrEtForum extends MbqBaseWrEtForum {
     }
 
     public function markForumRead($oMbqEtForum){
-        global $db, $auth;
-
         if($oMbqEtForum != null)
         {
-            $forum_id = $oMbqEtForum->forumId->oriValue;
-            $forum_ids[] = $forum_id;
-
-            $sql = "SELECT *
-                FROM " . FORUMS_TABLE . "
-                WHERE forum_id = " . $forum_id;
-            $result = $db->sql_query($sql);
-            if ($forum_data = $db->sql_fetchrow($result))
-            {
-                $sub_sql = "SELECT *
-                    FROM " . FORUMS_TABLE . "
-                    WHERE left_id > " . $forum_data['left_id'] . " AND left_id < " . $forum_data['right_id'];
-                $sub_result = $db->sql_query($sub_sql);
-                while ($subforum_data = $db->sql_fetchrow($sub_result))
-                {
-                    if ($auth->acl_get('f_list', $subforum_data['forum_id']))
-                    {
-                        $forum_ids[] = $subforum_data['forum_id'];
-                    }
-                }
-            }
-            $db->sql_freeresult($result);
-
-            markread('topics', $forum_ids);
+            markread('topics', $oMbqEtForum->forumId->oriValue);
         }
         else
         {

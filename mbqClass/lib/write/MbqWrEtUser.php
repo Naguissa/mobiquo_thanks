@@ -4,6 +4,8 @@ defined('MBQ_IN_IT') or exit;
 
 MbqMain::$oClk->includeClass('MbqBaseWrEtUser');
 
+
+
 Class MbqWrEtUser extends MbqBaseWrEtUser {
 
     public function __construct() {
@@ -13,7 +15,7 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
      * register user
      */
     public function registerUser($username, $password, $email, $verified, $custom_register_fields, $profile, &$errors) {
-        global $config, $mobiquo_config,$db, $user, $phpbb_dispatcher, $phpbb_root_path, $phpEx,$user_info,$phpbb_container;
+        global $config, $mobiquo_config,$db, $user, $auth, $template, $phpbb_dispatcher, $phpbb_root_path, $phpEx,$user_info,$register,$phpbb_container, $request, $cache, $user;
         require_once($phpbb_root_path .'/includes/functions_user.'. $phpEx);
         if(file_exists($phpbb_root_path . 'includes/functions_module.' . $phpEx))
         {
@@ -25,7 +27,7 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
         {
             $errors[] = $user->lang['UCP_REGISTER_DISABLE'];
         }
-
+        $is_dst = $config['board_dst'];
         $timezone = $config['board_timezone'];
         $data = array(
             'username'            => utf8_normalize_nfc($username),
@@ -63,7 +65,6 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
 
         // Replace "error" strings with their real, localised form
         $errors = preg_replace_callback('#^([A-Z_]+)$#', function($matches){
-            global $user;
             $tmp = $matches[1];
             if(!empty($user->lang[$tmp]))
             {
@@ -79,6 +80,8 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
                 $errors[] = sprintf($user->lang['IP_BLACKLISTED'], $user->ip, $dnsbl[1]);
             }
         }
+
+
 
         $cp = $phpbb_container->get('profilefields.manager');
         $cp_data = $cp_error = array();
@@ -102,7 +105,6 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
 
         if (!sizeof($errors))
         {
-            $server_url = generate_board_url();
 
             // Which group by default?
             $group_name = 'REGISTERED';
@@ -199,9 +201,9 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
                 group_user_add($config['tapatalk_register_group'], $user_id);
             }
             //copy avatar
-            if(isset($profile['avatar']) && $profile['avatar'])
+            if(isset($profile['avatar_url']))
             {
-                $this->tt_copy_avatar($user_id, $profile['avatar']);
+                $this->tt_copy_avatar($user_id, $profile['avatar_url']);
             }
             // This should not happen, because the required variables are listed above...
             if ($user_id === false)
@@ -226,53 +228,58 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
 					$email_template = 'user_welcome';
 				}
 
-				// fix user is normal but send inactive email
-                if ((isset($user_type) && $user_type != USER_INACTIVE) && $email_template != 'user_welcome') {
-                    $email_template = '';
-                }
+                if ($config['email_enable'] && $user_type == USER_INACTIVE)
+                {
+                    $server_url = generate_board_url();
+                    include_once($phpbb_root_path . 'includes/functions_messenger.' . $phpEx);
 
-				if ($config['email_enable'] && $email_template)
-				{
-					include_once($phpbb_root_path . 'includes/functions_messenger.' . $phpEx);
+                    $messenger = new messenger(false);
 
-					$messenger = new messenger(false);
+                    $messenger->template($email_template, $data['lang']);
 
-					$messenger->template($email_template, $data['lang']);
+                    $messenger->to($data['email'], $data['username']);
 
-					$messenger->to($data['email'], $data['username']);
+                    if(!method_exists($messenger, 'anti_abuse_headers'))
+                    {
+                        $messenger->headers('X-AntiAbuse: Board servername - ' . $config['server_name']);
+                        $messenger->headers('X-AntiAbuse: User_id - ' . $user->data['user_id']);
+                        $messenger->headers('X-AntiAbuse: Username - ' . $user->data['username']);
+                        $messenger->headers('X-AntiAbuse: User IP - ' . $user->ip);
+                    }
+                    else
+                    {
+                        $messenger->anti_abuse_headers($config, $user);
+                    }
 
-                    $messenger->replyto('Tapatalk Support <support@tapatalk.com>');
+                    $messenger->assign_vars(array(
+                        'WELCOME_MSG'    => htmlspecialchars_decode(sprintf($user->lang['WELCOME_SUBJECT'], $config['sitename'])),
+                        'USERNAME'        => htmlspecialchars_decode($data['username']),
+                        'PASSWORD'        => htmlspecialchars_decode($data['new_password']),
+                        'U_ACTIVATE'    => "$server_url/ucp.$phpEx?mode=activate&u=$user_id&k=$user_actkey")
+                    );
 
-					$messenger->anti_abuse_headers($config, $user);
-
-					$messenger->assign_vars(array(
-						'WELCOME_MSG'	=> htmlspecialchars_decode(sprintf($user->lang['WELCOME_SUBJECT'], $config['sitename'])),
-						'USERNAME'		=> htmlspecialchars_decode($data['username']),
-						'PASSWORD'		=> htmlspecialchars_decode($data['new_password']),
-						'U_ACTIVATE'	=> "$server_url/ucp.$phpEx?mode=activate&u=$user_id&k=$user_actkey")
-					);
 
                     $messenger->send(NOTIFY_EMAIL);
-				}
 
-                if ($config['require_activation'] == USER_ACTIVATION_ADMIN)
-                {
-                    /* @var $phpbb_notifications \phpbb\notification\manager */
-                    $phpbb_notifications = $phpbb_container->get('notification_manager');
-                    $phpbb_notifications->add_notifications('notification.type.admin_activate_user', array(
-                        'user_id'		=> $user_id,
-                        'user_actkey'	=> $user_row['user_actkey'],
-                        'user_regdate'	=> $user_row['user_regdate'],
-                    ));
+                    if ($config['require_activation'] == USER_ACTIVATION_ADMIN)
+                    {
+                        /* @var $phpbb_notifications \phpbb\notification\manager */
+                        $phpbb_notifications = $phpbb_container->get('notification_manager');
+                        $phpbb_notifications->add_notifications('notification.type.admin_activate_user', array(
+                            'user_id'		=> $user_id,
+                            'user_actkey'	=> $user_row['user_actkey'],
+                            'user_regdate'	=> $user_row['user_regdate'],
+                        ));
+                    }
+
+                    $user_info['user_id'] = $user_id;
+                    $user_info = array_merge($user_info,$user_row);
                 }
-
-                $user_info['user_id'] = $user_id;
-                $user_info = array_merge($user_info,$user_row);
                 $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
-				return $oMbqRdEtUser->initOMbqEtUser($user_id, array('case'=>'byUserId'));
+                return $oMbqRdEtUser->initOMbqEtUser($user_id, array('case'=>'byUserId'));
             }
+            return false;
         }
-        return false;
     }
 
     public function updatePasswordDirectly($oMbqEtUser, $newPassword)
@@ -445,7 +452,7 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
 
     public function ignoreUser($oMbqEtUser, $ignoremode)
     {
-        global $phpbb_root_path, $phpEx, $request, $user, $auth, $template;
+        global $phpbb_root_path, $phpEx, $request, $user, $auth;
 
         //setup fake template
         requireExtLibrary('fake_template');
@@ -545,26 +552,34 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
             include_once($phpbb_root_path . 'includes/functions_posting.' . $phpEx);
 
             $ban_userid = $oMbqEtUser->userId->oriValue;
-
-            $sql = "SELECT post_id,topic_id,forum_id FROM " . POSTS_TABLE . " p WHERE p.poster_id = '".$ban_userid."'";
-            $result1 = $db->sql_query($sql);
-            while($row = $db->sql_fetchrow($result1)) {
-                $sql = 'SELECT f.*, t.*, p.*, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield
-                    FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . ' f, ' . USERS_TABLE . " u
-                    WHERE p.post_id = '".$row['post_id']."'
-                        AND t.topic_id = p.topic_id
-                        AND u.user_id = p.poster_id
-                        AND (f.forum_id = t.forum_id
-                            OR f.forum_id = '".$row['forum_id']."')" .
-                        (($auth->acl_get('m_approve', $row['forum_id'])) ? '' : 'AND p.post_approved = 1');
-                $result2 = $db->sql_query($sql);
-                $post_data = $db->sql_fetchrow($result2);
-                $db->sql_freeresult($result2);
-                delete_post($row['forum_id'], $row['topic_id'], $row['post_id'], $post_data, true, "User banned");
+            //judge the user post num is or not > 50
+            $sql = "SELECT COUNT(*) AS tp_count FROM " . POSTS_TABLE . " p WHERE p.poster_id = '".$ban_userid."'";
+            $result = $db->sql_query($sql);
+            $countRow = $db->sql_fetchrow($result);
+            $db->sql_freeresult($result);
+            if($countRow['tp_count'] > 50) {
+                return trigger_error('USER_POSTS_NUM GERATER THAN 50');
             }
-            unset($row);
-            $db->sql_freeresult($result1);
-
+            else {
+                $sql = "SELECT post_id,topic_id,forum_id FROM " . POSTS_TABLE . " p WHERE p.poster_id = '".$ban_userid."'";
+                $result1 = $db->sql_query($sql);
+                while($row = $db->sql_fetchrow($result1)) {
+                    $sql = 'SELECT f.*, t.*, p.*, u.username, u.username_clean, u.user_sig, u.user_sig_bbcode_uid, u.user_sig_bbcode_bitfield
+                        FROM ' . POSTS_TABLE . ' p, ' . TOPICS_TABLE . ' t, ' . FORUMS_TABLE . ' f, ' . USERS_TABLE . " u
+                        WHERE p.post_id = '".$row['post_id']."'
+                            AND t.topic_id = p.topic_id
+                            AND u.user_id = p.poster_id
+                            AND (f.forum_id = t.forum_id
+                                OR f.forum_id = '".$row['forum_id']."')" .
+                            (($auth->acl_get('m_approve', $row['forum_id'])) ? '' : 'AND p.post_approved = 1');
+                    $result2 = $db->sql_query($sql);
+                    $post_data = $db->sql_fetchrow($result2);
+                    $db->sql_freeresult($result2);
+                    delete_post($row['forum_id'], $row['topic_id'], $row['post_id'], $post_data);
+                }
+                unset($row);
+                $db->sql_freeresult($result1);
+            }
         }
 
         return true;
@@ -623,98 +638,5 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
 
         return true;
     }
-
-    /**
-     * @param MbqEtUser $oMbqEtUser
-     * @param int $mode
-     * @return bool
-     */
-    public function mApproveUser($oMbqEtUser, $mode)
-    {
-        global $user, $config, $phpbb_container, $phpbb_root_path, $phpEx, $phpbb_log, $db;
-
-        if (!$oMbqEtUser || !is_a($oMbqEtUser, 'MbqEtUser')) {
-            return false;
-        }
-        $mode = (int)$mode;
-        $user_row = $oMbqEtUser->mbqBind;
-        if (!isset($user_row['userRecord']) || !is_array($user_row['userRecord'])) {
-            return false;
-        }
-        $user_row = $user_row['userRecord'];
-        $user_id = (int)$oMbqEtUser->userId->oriValue;
-
-        if (!$user_id || !$user_row || !is_array($user_row)) {
-            return false;
-        }
-        $user->add_lang(array('posting', 'ucp', 'acp/users'));
-
-        switch ($mode) {
-            case '1':
-                // approve active
-                $mode = 'activate';
-                break;
-            case '2':
-                //unApprove
-                $mode = 'deactivate';
-                break;
-            default:
-                // unSupport mode action
-                return false;
-        }
-
-        if ($user_id == $user->data['user_id']) {
-            return $user->lang['CANNOT_DEACTIVATE_YOURSELF'];
-        }
-
-        if ($user_row['user_type'] == USER_FOUNDER) {
-            return $user->lang['CANNOT_DEACTIVATE_FOUNDER'];
-        }
-
-        if ($user_row['user_type'] == USER_IGNORE) {
-            return $user->lang['CANNOT_DEACTIVATE_BOT'];
-        }
-
-        if (!function_exists('user_active_flip')) {
-            require_once($phpbb_root_path . '/includes/functions_user.' . $phpEx);
-        }
-        user_active_flip($mode, $user_id);
-
-        if ($user_row['user_type'] == USER_INACTIVE)
-        {
-            if ($config['require_activation'] == USER_ACTIVATION_ADMIN)
-            {
-                /* @var $phpbb_notifications \phpbb\notification\manager */
-                $phpbb_notifications = $phpbb_container->get('notification_manager');
-                $phpbb_notifications->delete_notifications('notification.type.admin_activate_user', $user_row['user_id']);
-
-                if (!class_exists('messenger'))
-                {
-                    include($phpbb_root_path . 'includes/functions_messenger.' . $phpEx);
-                }
-
-                $messenger = new messenger(false);
-                $messenger->template('admin_welcome_activated', $user_row['user_lang']);
-                $messenger->set_addresses($user_row);
-                $messenger->anti_abuse_headers($config, $user);
-                $messenger->assign_vars(array(
-                        'USERNAME'	=> htmlspecialchars_decode($user_row['username']))
-                );
-                $messenger->send(NOTIFY_EMAIL);
-            }
-        }
-
-        $log = ($user_row['user_type'] == USER_INACTIVE) ? 'LOG_USER_ACTIVE' : 'LOG_USER_INACTIVE';
-        $phpbb_log->add('admin', $user->data['user_id'], $user->ip, $log, false, array($user_row['username']));
-        $phpbb_log->add('user', $user->data['user_id'], $user->ip, $log . '_USER', false, array(
-            'reportee_id' => $user_id
-        ));
-
-        return true;
-
-        // $message = ($user_row['user_type'] == USER_INACTIVE) ? 'USER_ADMIN_ACTIVATED' : 'USER_ADMIN_DEACTIVED';
-        // $user->lang[$message]
-    }
-
 }
 

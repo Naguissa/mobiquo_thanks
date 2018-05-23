@@ -19,14 +19,14 @@ Abstract Class MbqBaseActGetThreadByUnread extends MbqBaseAct {
             $in->topicId = $this->getInputParam('topicId');
             $in->postsPerRequest = (int) $this->getInputParam('perPage');
             $in->postsPerRequest = $in->postsPerRequest ? $in->postsPerRequest : 20;
-            $in->returnHtml =   $this->getInputParam('returnHtml');
+            $in->returnHtml = (boolean) $this->getInputParam('returnHtml');
          }
         else
         {
             $in->topicId = $this->getInputParam(0);
             $in->postsPerRequest = (int) $this->getInputParam(1);
             $in->postsPerRequest = $in->postsPerRequest ? $in->postsPerRequest : 20;
-            $in->returnHtml =  $this->getInputParam(2);
+            $in->returnHtml = (boolean) $this->getInputParam(2);
         }
         return $in;
     }
@@ -50,12 +50,6 @@ Abstract Class MbqBaseActGetThreadByUnread extends MbqBaseAct {
                 $oMbqRdEtForumPost = MbqMain::$oClk->newObj('MbqRdEtForumPost');
                 $in->oMbqDataPage = $oMbqRdEtForumPost->getObjsMbqEtForumPost($oMbqEtForumTopic, array('case' => 'byTopic', 'oMbqDataPage' => $in->oMbqDataPage));
                 $this->data = $oMbqRdEtForumTopic->returnApiDataForumTopic($oMbqEtForumTopic);
-                if ($oMbqEtForumTopic->hasPoll->oriValue)
-                {
-                    $oMbqRdEtPoll = MbqMain::$oClk->newObj('MbqRdEtPoll');
-                    $oMbqEtPoll = $oMbqRdEtPoll->initOMbqEtPoll($oMbqEtForumTopic->topicId->oriValue, false);
-                    $this->data['poll'] = $oMbqRdEtPoll->returnApiDataPoll($oMbqEtPoll);
-                }
                 $this->data['position'] = (int)$firstUnreadPosition;
                 if(isset($oMbqEtForumTopic->oMbqEtForum))
                 {
@@ -71,17 +65,10 @@ Abstract Class MbqBaseActGetThreadByUnread extends MbqBaseAct {
                 /* reset forum topic subscription */
                 $oMbqWrEtForumTopic->resetForumTopicSubscription($oMbqEtForumTopic);
             } else {
-                if (MbqMain::hasLogin()) {
-                    $reason = ['reason' => MBQ_ERR_NOT_PERMISSION];
-                }else{
-                    $reason = ['reason' => MBQ_ERR_LOGIN_REQUIRED];
-                }
-
-                MbqError::alert('', $aclResult, $reason, MBQ_ERR_APP);
+                MbqError::alert('', $aclResult, '', MBQ_ERR_APP);
             }
         } else {
-            $reason = ['reason' => MBQ_ERR_DATA_NOT_FOUND];
-            MbqError::alert('', "This topic does not exist or you do not have permission to access it!", $reason, MBQ_ERR_APP);
+            MbqError::alert('', "This topic does not exist or you do not have permission to access it!", '', MBQ_ERR_APP);
         }
     }
   

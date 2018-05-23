@@ -49,12 +49,18 @@ Abstract Class MbqBaseActCallTapatalkApi extends MbqBaseAct {
      * action implement
      */
     protected function actionImplement($in) {
+        global $user;
+
         if (!MbqMain::hasLogin()) {
             MbqError::alert('', "This method is only for logged users", '', MBQ_ERR_NOT_SUPPORT);
         }
         $oMbqRdCommon = MbqMain::$oClk->newObj('MbqRdCommon');
         $apiKey = $oMbqRdCommon->getApiKey();
+
+        $ttid = isset($user->data['ttid']) ? intval($user->data['ttid']) : 0;
         $userId = MbqMain::$oCurMbqEtUser->userId->oriValue;
+        
+        $requestData['forumapi_ttid'] = $ttid;
         $requestData['forumapi_key'] = $apiKey;
         $requestData['forumapi_uid'] = $userId;
         $inputParams = $this->getAllInputParams();

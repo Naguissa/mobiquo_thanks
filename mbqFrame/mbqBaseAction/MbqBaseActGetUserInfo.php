@@ -46,7 +46,7 @@ Abstract Class MbqBaseActGetUserInfo extends MbqBaseAct {
         } else if ($result != null) {
             MbqError::alert('', $result, '', MBQ_ERR_APP);
         } else {
-            MbqError::alert('', "User not found!", ['reason' => MBQ_ERR_DATA_NOT_FOUND, 'error' => 'User not found!'], MBQ_ERR_APP);
+            MbqError::alert('', "User not found!", '', MBQ_ERR_APP);
         }
     }
   

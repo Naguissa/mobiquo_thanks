@@ -6,10 +6,10 @@ defined('MBQ_IN_IT') or exit;
  * user read class
  */
 Abstract Class MbqBaseRdEtUser extends MbqBaseRd {
-
+    
     public function __construct() {
     }
-
+    
     /**
      * return user api data
      *
@@ -31,14 +31,8 @@ Abstract Class MbqBaseRdEtUser extends MbqBaseRd {
         if ($oMbqEtUser->iconUrl->hasSetOriValue()) {
             $data['icon_url'] = (string) $oMbqEtUser->iconUrl->oriValue;
         }
-
-        //Added to ensure we will never send back user email due GDPR, only on signing and login
-        $methodNeedEmail = array('login','sign_in');
-        if(in_array(MbqMain::$cmd,$methodNeedEmail))
-        {
-            if ($oMbqEtUser->userEmail->hasSetOriValue()) {
-                $data['email'] = (string)sha1($oMbqEtUser->userEmail->oriValue);
-            }
+        if ($oMbqEtUser->userEmail->hasSetOriValue()) {
+            $data['email'] = (string) $oMbqEtUser->userEmail->oriValue;
         }
         if ($oMbqEtUser->postCount->hasSetOriValue()) {
             $data['post_count'] = (int) $oMbqEtUser->postCount->oriValue;
@@ -191,15 +185,9 @@ Abstract Class MbqBaseRdEtUser extends MbqBaseRd {
             $data['is_ignored'] = (boolean) $oMbqEtUser->isIgnored->oriValue;
         }
         $data['from'] = 'browser';
-        if ($oMbqEtUser->canActive->hasSetOriValue()) {
-            $data['can_active'] = (boolean) $oMbqEtUser->canActive->oriValue;
-        } else {
-            $data['can_active'] = (boolean) MbqBaseFdt::getFdt('MbqFdtUser.MbqEtUser.canActive.default');
-        }
 
         return $data;
     }
-
     public function returnJsonApiDataUser($oMbqEtUser) {
         $data = array();
         if ($oMbqEtUser->userId->hasSetOriValue()) {
@@ -214,13 +202,8 @@ Abstract Class MbqBaseRdEtUser extends MbqBaseRd {
         if ($oMbqEtUser->iconUrl->hasSetOriValue()) {
             $data['icon_url'] = (string) $oMbqEtUser->iconUrl->oriValue;
         }
-        //Added to ensure we will never send back user email due GDPR, only on signing and login
-        $methodNeedEmail = array('login','sign_in');
-        if(in_array(MbqMain::$cmd,$methodNeedEmail))
-        {
-            if ($oMbqEtUser->userEmail->hasSetOriValue()) {
-                 $data['email'] = (string)sha1($oMbqEtUser->userEmail->oriValue);
-            }
+        if ($oMbqEtUser->userEmail->hasSetOriValue()) {
+            $data['email'] = (string) $oMbqEtUser->userEmail->oriValue;
         }
         if ($oMbqEtUser->postCount->hasSetOriValue()) {
             $data['post_count'] = (int) $oMbqEtUser->postCount->oriValue;
@@ -356,27 +339,30 @@ Abstract Class MbqBaseRdEtUser extends MbqBaseRd {
             $data['is_ignored'] = (boolean) $oMbqEtUser->isIgnored->oriValue;
         }
         $data['from'] = 'browser';
-        if ($oMbqEtUser->canActive->hasSetOriValue()) {
-            $data['can_active'] = (boolean) $oMbqEtUser->canActive->oriValue;
-        } else {
-            $data['can_active'] = (boolean) MbqBaseFdt::getFdt('MbqFdtUser.MbqEtUser.canActive.default');
-        }
 
         return $data;
     }
-
     /**
-     * return user avatar
+     * return user json api data
      *
      * @param  Object  $oMbqEtUser
-     * @return  url string
+     * @return  Array
      */
-    public function returnUserAvatar($oMbqEtUser)
-    {
-        return $oMbqEtUser->iconUrl->hasSetOriValue() ? (string) $oMbqEtUser->iconUrl->oriValue : '';
+    protected function returnAdvJsonApiDataUser($oMbqEtUser) {
+        $data = array();
+        if ($oMbqEtUser->userId->hasSetOriValue()) {
+            $data['id'] = (string) $oMbqEtUser->userId->oriValue;
+        }
+        $data['name'] = (string) $oMbqEtUser->getDisplayName();
+        if ($oMbqEtUser->iconUrl->hasSetOriValue()) {
+            $data['avatar'] = (string) $oMbqEtUser->iconUrl->oriValue;
+        }
+        if ($oMbqEtUser->isOnline->hasSetOriValue()) {
+            $data['online'] = (boolean) $oMbqEtUser->isOnline->oriValue;
+        }
+        return $data;
     }
 
-  
     /**
      * return user array api data
      *
@@ -396,8 +382,10 @@ Abstract Class MbqBaseRdEtUser extends MbqBaseRd {
         return $data;
     }
 
+
     public function returnApiDataCustomRegisterField($customRegisterFields)
     {
+
     }
     /**
      * login
@@ -513,4 +501,6 @@ Abstract Class MbqBaseRdEtUser extends MbqBaseRd {
     public function validatePassword($password){
         MbqError::alert('', __METHOD__ . ',line:' . __LINE__ . '.' . MBQ_ERR_INFO_NEED_ACHIEVE_IN_INHERITED_CLASSE);
     }
+
+
 }
