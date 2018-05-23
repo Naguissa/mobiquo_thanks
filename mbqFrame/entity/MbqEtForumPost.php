@@ -47,6 +47,7 @@ Class MbqEtForumPost extends MbqBaseEntity {
     public $editedByTime;
     public $canBan;
     public $isBan;
+    public $clientType;
 
     public $isDummyForumPost;   /* boolean value(default is false),the flag to judge the dummy forum post,used for the topic when itself is the first post */
 
@@ -57,6 +58,9 @@ Class MbqEtForumPost extends MbqBaseEntity {
     public $objsNotInContentMbqEtAtt;   /* the attachement objs not in the content of this post. */
     public $objsMbqEtThank;
     public $objsMbqEtLike;
+
+    public $showReason;
+    public $editReason;
 
     public function __construct() {
         parent::__construct();
@@ -101,7 +105,10 @@ Class MbqEtForumPost extends MbqBaseEntity {
         $this->editedByUserId = clone MbqMain::$simpleV;
         $this->editedByUsername = clone MbqMain::$simpleV;
         $this->editedByTime = clone MbqMain::$simpleV;
+        $this->clientType = clone MbqMain::$simpleV;
 
+        $this->showReason = clone MbqMain::$simpleV;
+        $this->editReason = clone MbqMain::$simpleV;
 
         $this->isDummyForumPost = clone MbqMain::$simpleV;
         $this->isDummyForumPost->setOriValue(false);

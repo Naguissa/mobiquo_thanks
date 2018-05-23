@@ -28,6 +28,7 @@ Class MbqEtForum extends MbqBaseEntity {
     public $requirePrefix;
     public $prefixes;   /* prefixes array.for example:array(array('id'=>1,'name'=>'prefix1'), array('id'=>2,'name'=>'prefix2')) */
     public $canUpload;  /* return true if the user has authority to upload attachments in this sub-forum. */
+    public $canCreatePoll;
 
     public $oParentMbqEtForum;  /* parent forum */
     public $objsSubMbqEtForum;  /* sub forums */
@@ -55,6 +56,7 @@ Class MbqEtForum extends MbqBaseEntity {
         $this->requirePrefix = clone MbqMain::$simpleV;
         $this->prefixes = clone MbqMain::$simpleV;
         $this->canUpload = clone MbqMain::$simpleV;
+        $this->canCreatePoll = clone MbqMain::$simpleV;
 
         $this->oParentMbqEtForum = NULL;
         $this->objsSubMbqEtForum = array();

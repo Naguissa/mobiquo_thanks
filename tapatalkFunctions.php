@@ -1135,10 +1135,30 @@ function check_error_status(&$str)
                 return true;
             }
         case 'm_ban_user':
+        case 'm_unban_user':
             if (strpos($str, $user->lang['BAN_UPDATE_SUCCESSFUL']) === false)
                 return false;
             else {
                 $str = $user->lang['BAN_UPDATE_SUCCESSFUL'];
+                return true;
+            }
+        case 'update_email':
+            if (strpos($str, $user->lang['PROFILE_UPDATED']) === false)
+            {
+                return false;
+            }
+            else
+            {
+                $str = $user->lang['PROFILE_UPDATED'];
+                return true;
+            }
+        case 'ignore_user':
+            if (strpos($str, $user->lang['FOES_UPDATED']) === false)
+            {
+                return false;
+            }
+            else
+            {
                 return true;
             }
     }

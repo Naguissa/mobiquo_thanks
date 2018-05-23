@@ -70,6 +70,63 @@ Class MbqAclEtForumPost extends MbqBaseAclEtForumPost {
     }
 
     /**
+     * judge can guest reply post
+     *
+     * @param  Object  $oMbqEtForumPost
+     * @return  Boolean
+     */
+    public function canAclGuestReplyPost($oMbqEtForumPost) {
+        global $user,$auth;
+        $post_data = $oMbqEtForumPost->oMbqEtForum->mbqBind;
+        // Use post_row values in favor of submitted ones...
+        $forum_id    = $oMbqEtForumPost->oMbqEtForum->forumId->oriValue;
+        $topic_id    = $oMbqEtForumPost->topicId->oriValue;
+
+        // Need to login to passworded forum first?
+        if ($post_data['forum_password'] && !check_forum_password($forum_id))
+            return getSystemString('LOGIN_FORUM');
+
+        // Check permissions
+        if ($user->data['is_bot'])  return getSystemString('NOT_AUTHORISED');
+
+        // Is the user able to read within this forum?
+        if (!$auth->acl_get('f_read', $forum_id))
+        {
+            if ($user->data['user_id'] != ANONYMOUS)
+            {
+                return getSystemString('USER_CANNOT_READ');
+            }
+
+            return getSystemString('LOGIN_EXPLAIN_POST');
+        }
+
+        // Permission to do the reply
+        if (!$auth->acl_get('f_reply', $forum_id))
+        {
+            if ($user->data['user_id'] != ANONYMOUS)
+            {
+                return getSystemString('USER_CANNOT_REPLY');
+            }
+
+            return getSystemString('LOGIN_EXPLAIN_POST');
+        }
+
+        // Is the user able to post within this forum?
+        if ($post_data['forum_type'] != FORUM_POST)
+        {
+            return getSystemString('USER_CANNOT_FORUM_POST');
+        }
+
+        // Forum/Topic locked?
+        if (($post_data['forum_status'] == ITEM_LOCKED || (isset($post_data['topic_status']) && $post_data['topic_status'] == ITEM_LOCKED)) && !$auth->acl_get('m_edit', $forum_id))
+        {
+            return (($post_data['forum_status'] == ITEM_LOCKED) ? getSystemString('FORUM_LOCKED') : getSystemString('TOPIC_LOCKED'));
+        }
+
+        return true;
+    }
+
+    /**
      * judge can get quote post
      *
      * @param  Object  $oMbqEtForumPost
@@ -78,7 +135,7 @@ Class MbqAclEtForumPost extends MbqBaseAclEtForumPost {
     public function canAclGetQuotePost($oMbqEtForumPost) {
         global $user,$auth;
 
-        if (!$user->data['is_registered'])  return getSystemString('LOGIN_EXPLAIN_POST');
+        //if (!$user->data['is_registered'])  return getSystemString('LOGIN_EXPLAIN_POST');
         $post_data = $oMbqEtForumPost->oMbqEtForum->mbqBind;
         // Use post_row values in favor of submitted ones...
         $forum_id    = $oMbqEtForumPost->oMbqEtForum->forumId->oriValue;

@@ -70,10 +70,15 @@ Abstract Class MbqBaseActGetTopic extends MbqBaseAct {
                     break;
                 }
             } else {
-                MbqError::alert('',$aclResult, '', MBQ_ERR_APP);
+                if (MbqMain::hasLogin()) {
+                    $reason = ['reason' => MBQ_ERR_NOT_PERMISSION];
+                }else{
+                    $reason = ['reason' => MBQ_ERR_LOGIN_REQUIRED];
+                }
+                MbqError::alert('',$aclResult, $reason, MBQ_ERR_APP);
             }
         } else {
-            MbqError::alert('', "Need valid forum id!", '', MBQ_ERR_APP);
+            MbqError::alert('', "Need valid forum id!", ['reason' => MBQ_ERR_DATA_NOT_FOUND, 'error' => "Need valid forum id!"], MBQ_ERR_APP);
         }
     }
   

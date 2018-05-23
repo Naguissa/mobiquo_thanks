@@ -105,6 +105,10 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
         $message_parser->get_submitted_attachment_data($post_data['poster_id']);
 
         $post_data['username']       = '';
+        // guest reply post
+        if (!$user->data['is_registered'] && isset($oMbqEtForumPost->oMbqEtForum->mbqBind['guest_username'])) {
+            $post_data['username'] = $oMbqEtForumPost->oMbqEtForum->mbqBind['guest_username'];
+        }
         $post_data['enable_urls']    = $post_data['enable_magic_url'];
         $post_data['enable_sig']     = ($config['allow_sig'] && $user->optionget('attachsig')) ? true: false;
         $post_data['enable_smilies'] = ($config['allow_smilies'] && $user->optionget('smilies')) ? true : false;
@@ -180,7 +184,7 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
 
         $message_parser->parse($post_data['enable_bbcode'], ($config['allow_post_links']) ? $post_data['enable_urls'] : false, $post_data['enable_smilies'], $img_status, $flash_status, $quote_status, $config['allow_post_links']);
 
-        if ($config['flood_interval'] && !$auth->acl_get('f_ignoreflood', $forum_id))
+        if ($config['flood_interval'])
         {
             // Flood check
             $last_post_time = 0;
@@ -208,7 +212,14 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
                 trigger_error('FLOOD_ERROR');
             }
         }
-
+        $sql = 'SELECT post_checksum FROM  ' . POSTS_TABLE . ' WHERE poster_id = ' .  $user->data['user_id'] . ' ORDER BY post_id DESC';
+        $result = $db->sql_query_limit($sql,1);
+        $row = $db->sql_fetchrow($result);
+        if($row && $row['post_checksum'] == $message_md5)
+        {
+            trigger_error('FLOOD_ERROR');
+        }
+        $db->sql_freeresult($result);
         // Validate username
         if (($post_data['username'] && !$user->data['is_registered']))
         {

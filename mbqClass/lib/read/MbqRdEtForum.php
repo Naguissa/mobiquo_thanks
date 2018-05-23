@@ -390,6 +390,7 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
             $read_only_forums = explode(",", $tapatalk_forum_read_only);
             $can_post = true;
             $can_upload = true;
+            $can_create_poll = true;
             if(empty($read_only_forums) || !is_array($read_only_forums))
             {
                 $read_only_forums = array();
@@ -401,6 +402,10 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
             if(!$can_post||!$auth->acl_get('u_attach'))
             {
                 $can_upload = false;
+            }
+            if(!$can_post||!$auth->acl_get('f_poll', $forum_id))
+            {
+                $can_create_poll = false;
             }
             $oMbqEtForum = MbqMain::$oClk->newObj('MbqEtForum');
             $oMbqEtForum->forumId->setOriValue($forum_id);
@@ -425,6 +430,7 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
             $oMbqEtForum->subOnly->setOriValue(isset($row['sub_only']) && $row['sub_only']);
             $oMbqEtForum->canPost->setOriValue($can_post);
             $oMbqEtForum->canUpload->setOriValue($can_upload);
+            $oMbqEtForum->canCreatePoll->setOriValue($can_create_poll);
 
             $oMbqEtForum->mbqBind = $row;
             MbqMain::$Cache->Set('MbqEtForum', $forum_id, $oMbqEtForum);
@@ -546,8 +552,9 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
     }
     public function getUrl($oMbqEtForum)
     {
-        global $phpbb_home,$phpEx;
-        $forum_id = $oMbqEtForum->forumId->oriValue;
-        return append_sid("{$phpbb_home}viewforum.$phpEx", "f=$forum_id");
+        global $phpbb_root_path, $phpEx, $db, $auth, $config;
+        $base = new  \tas2580\seourls\event\base($auth, $config, $phpbb_root_path);
+        $forumUrl = $base->generate_forum_link($oMbqEtForum->forumId->oriValue, $oMbqEtForum->forumName->oriValue, 0, true);
+        return $forumUrl;
     }
 }

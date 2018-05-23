@@ -65,10 +65,11 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
     public function loginDirectly($oMbqEtUser, $trustCode) {
         global $auth, $request, $user, $config, $db, $phpbb_root_path, $phpEx, $phpbb_container;
 
-        if($oMbqEtUser->userType->oriValue === 'unapproved' || $oMbqEtUser->userType->oriValue === 'inactive')
-        {
-            return 'The user is currently inactive or forum require admin approval for new accounts. Please check for account verification email or wait admin approval. If you have problems activating your account, please contact a board administrator.';
-        }
+//        if($oMbqEtUser->userType->oriValue === 'unapproved' || $oMbqEtUser->userType->oriValue === 'inactive')
+//        {
+//            // inactive user can login
+//            // return 'The user is currently inactive or forum require admin approval for new accounts. Please check for account verification email or wait admin approval. If you have problems activating your account, please contact a board administrator.';
+//        }
 
         $user->session_kill();
 
@@ -135,12 +136,17 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         {
             $flood_interval = intval($config['flood_interval']);
         }
-        if($user->data['user_id'] == ANONYMOUS)
+        $userId = $user->data['user_id'];
+        if (isset($user->data['origin_user_id']) && $user->data['origin_user_id']) {
+            $userId = $user->data['origin_user_id']; // inactive user can login
+            $user->data['user_id'] = $userId;
+        }
+        if($userId == ANONYMOUS)
         {
             return "User is banned and cannot login";
         }
         MbqMain::$oMbqAppEnv->currentUserInfo = $user->data;
-        $this->initOCurMbqEtUser($user->data['user_id']);
+        $this->initOCurMbqEtUser($userId);
         return true;
     }
     public function logout()
@@ -175,9 +181,12 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         if ($mbqOpt['case'] == 'byUserIds') {
             $result = array();
             $user_ids = implode(',',$var);
-            $sql = "    SELECT u.*
+            $sql = "    SELECT u.*,
+                        MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
                         FROM " . USERS_TABLE . " AS u
+                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
                         WHERE u.user_id in ($user_ids)
+                        GROUP BY u.user_id
                     ";
             $sqlresult = $db->sql_query($sql);
             $userRows = array();
@@ -186,22 +195,6 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                 $userRows[] = $row;
             }
             $db->sql_freeresult($sqlresult);
-
-            if ($config['load_onlinetrack'] && sizeof($user_ids))
-            {
-                $sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
-		FROM ' . SESSIONS_TABLE . '
-		WHERE ' . $db->sql_in_set('session_user_id', $user_ids) . '
-		GROUP BY session_user_id';
-                $result = $db->sql_query($sql);
-
-                $update_time = $config['load_online_time'] * 60;
-                while ($row = $db->sql_fetchrow($result))
-                {
-                    MbqMain::$Cache->Set('MbqEtUserOnline',$row['session_user_id'], (time() - $update_time < $row['online_time'] && (($row['viewonline']) || $auth->acl_get('u_viewonline'))) ? true : false);
-                }
-                $db->sql_freeresult($result);
-            }
             return $this->getObjsMbqEtUser($userRows, array('case'=>'byUserRows'));
         } elseif ($mbqOpt['case'] == 'byUserRows') {
             $userRows = $var;
@@ -217,7 +210,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $sql = 'SELECT s.session_user_id, s.session_ip, s.session_viewonline
 		            FROM ' . SESSIONS_TABLE . ' s
 		            WHERE s.session_time >= ' . $onlinetime .
-		            ' AND s.session_user_id <> ' . ANONYMOUS;
+		            ' AND s.session_user_id <> ' . ANONYMOUS . ' GROUP BY s.session_user_id ';
             $result = $db->sql_query_limit($sql, $oMbqDataPage->numPerPage, $oMbqDataPage->startNum);
             $oMbqDataPage->datas = array();
             while($member = $db->sql_fetchrow($result))
@@ -233,13 +226,34 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $sql = 'SELECT u.*
                     FROM ' . USERS_TABLE . ' u
                     WHERE u.user_type <> 2
-                    ORDER BY u.username';
+                    ORDER BY u.username
+                    LIMIT 20';
 
-            $result = $db->sql_query_limit($sql,20);
+            $result = $db->sql_query($sql);
             $members = array();
             while($member = $db->sql_fetchrow($result))
             {
                 $members[] = $this->initOMbqEtUser($member, array('case'=>'user_row'));
+            }
+            $db->sql_freeresult($result);
+            $oMbqDataPage->datas = $members;
+            $oMbqDataPage->totalNum = sizeof($members);
+            return $oMbqDataPage;
+        }
+        elseif ($mbqOpt['case'] == 'voted') {
+            $optionId = $var->optionId;
+            $topicId = $var->topicId;
+            $oMbqDataPage = $mbqOpt['oMbqDataPage'];
+            $sql = 'SELECT u.*
+                    FROM ' . USERS_TABLE . ' u
+                    LEFT JOIN ' . POLL_VOTES_TABLE . ' v ON u.user_id = v.vote_user_id
+                    WHERE v.poll_option_id = ' . $optionId . '
+                        AND v.topic_id = ' . $topicId;
+            $result = $db->sql_query_limit($sql, $oMbqDataPage->numPerPage, $oMbqDataPage->startNum);
+            $members = array();
+            while ($member = $db->sql_fetchrow($result))
+            {
+                $members[] = $this->initOMbqEtUser($member, array('case' => 'user_row'));
             }
             $db->sql_freeresult($result);
             $oMbqDataPage->datas = $members;
@@ -252,10 +266,10 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $sql = 'SELECT u.user_id
                     FROM ' . USERS_TABLE . ' u
                     WHERE u.user_type <> 2 and u.username COLLATE UTF8_GENERAL_CI LIKE \'%' . $keywords . '%\'
-                    ORDER BY u.username';
+                    ORDER BY u.username
+                    LIMIT 20';
 
-            $result = $db->sql_query_limit($sql,$oMbqDataPage->numPerPage, $oMbqDataPage->startNum);
-
+            $result = $db->sql_query($sql);
             $members = array();
             while($member = $db->sql_fetchrow($result))
             {
@@ -284,8 +298,126 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $oMbqDataPage->totalNum = sizeof($members);
             return $oMbqDataPage;
         }
+        elseif ($mbqOpt['case'] == 'getMemberList')
+        {
+            return self::_getObjsMbqEtUserGetMemberList($var, $mbqOpt);
+        }
+        elseif ($mbqOpt['case'] == 'getInactiveUsers')
+        {
+            return self::_getObjsMbqEtUserGetInactiveUsers($var, $mbqOpt);
+        }
 
         MbqError::alert('', __METHOD__ . ',line:' . __LINE__ . '.' . MBQ_ERR_INFO_UNKNOWN_CASE);
+    }
+
+    /**
+     * @param $var
+     * @param $mbqOpt
+     * @return MbqDataPage
+     */
+    protected function _getObjsMbqEtUserGetInactiveUsers($var, $mbqOpt)
+    {
+        global $phpbb_root_path, $phpEx;
+
+        /** @var MbqDataPage $oMbqDataPage */
+        $oMbqDataPage = $mbqOpt['oMbqDataPage'];
+
+        if (!function_exists('view_inactive_users')) {
+            require_once($phpbb_root_path . '/includes/functions_admin.' . $phpEx);
+        }
+        $oMbqDataPage->datas = [];
+        $sql_where = '';
+        $sql_sort = 'user_inactive_time DESC';
+        $per_page = $oMbqDataPage->numPerPage;
+        $start = $oMbqDataPage->startNum;
+        $inactiveUsers = [];
+        $inactive_count = 0;
+        $start = view_inactive_users($inactiveUsers, $inactive_count, $per_page, $start, $sql_where, $sql_sort, true);
+
+        $oMbqDataPage->totalNum = $inactive_count;
+        if ($inactiveUsers) {
+            foreach ($inactiveUsers as $member) {
+                $oMbqDataPage->datas[] = $this->initOMbqEtUser($member, array('case' => 'user_row'));
+            }
+        }
+
+        return $oMbqDataPage;
+    }
+
+    /**
+     * @param $var
+     * @param $mbqOpt
+     * @return MbqDataPage
+     */
+    protected function _getObjsMbqEtUserGetMemberList($var, $mbqOpt)
+    {
+        /** @var \phpbb\db\driver\mysql $db */
+        global $config, $db, $auth;
+
+        /** @var MbqDataPage $oMbqDataPage */
+        $oMbqDataPage = $mbqOpt['oMbqDataPage'];
+        $isOnlineValidTime = time() - ($config['load_online_time'] * 60);
+
+        $action = 'all'; // default
+        if (isset($var->action)) {
+            $action = strtolower($var->action);
+        }
+        $user_types = array(USER_NORMAL, USER_FOUNDER);
+        $adminPermission = false;
+        if ($auth->acl_gets('a_')) {
+            $adminPermission = true;
+            $user_types[] = USER_INACTIVE;
+        }
+        $sqlWhere = '';
+        switch ($action) {
+            case 'all':
+                $sqlWhere = '';
+                break;
+            case 'search':
+                if (isset($var->searchUserName)) {
+                    $searchUserName = $db->sql_escape(utf8_clean_string($var->searchUserName));
+                    $sqlWhere.= ($searchUserName) ? ' AND u.username_clean ' . 'LIKE \'%' . $searchUserName . '%\' '  : '';
+                    // $db->sql_like_expression(str_replace('*', $db->get_any_char(), utf8_clean_string($searchUserName)))
+                }
+                break;
+            default:
+                // unSupport action type
+                return $oMbqDataPage;
+                break;
+        }
+        // Count the users
+        $sql = 'SELECT COUNT(u.user_id) AS total_users
+                FROM ' . USERS_TABLE . " u 
+                WHERE " . $db->sql_in_set('u.user_type', $user_types) . " $sqlWhere ";
+        $result = $db->sql_query($sql);
+        $total_users = (int) $db->sql_fetchfield('total_users');
+        $db->sql_freeresult($result);
+
+        $oMbqDataPage->datas = [];
+        if ($total_users) {
+            // Select
+            $sql = 'SELECT IFNULL(s.session_time,u.user_lastvisit) as last_active,!ISNULL(s.session_time) as is_online, u.*, s.session_page, s.session_forum_id
+                FROM  ' . USERS_TABLE . ' u
+                LEFT JOIN  (SELECT session_user_id, MAX(session_time) AS session_time,session_page,session_forum_id
+                    FROM ' . SESSIONS_TABLE . '
+                    WHERE session_time >= ' . $isOnlineValidTime . '
+                        GROUP BY session_user_id
+                    ) s on s.session_user_id = user_id
+                WHERE ' . $db->sql_in_set('u.user_type', $user_types) . ' ' . $sqlWhere . ' 
+                ORDER BY last_active DESC, u.user_lastvisit DESC';
+
+            $result = $db->sql_query_limit($sql, $oMbqDataPage->numPerPage, $oMbqDataPage->startNum);
+
+            while ($member = $db->sql_fetchrow($result)) {
+                if ($adminPermission) $member['check_ban'] = true;
+                $oMbqDataPage->datas[] = $this->initOMbqEtUser($member, array('case' => 'user_row'));
+            }
+            $db->sql_freeresult($result);
+        }
+
+        $oMbqDataPage->totalNum = $total_users;
+
+        return $oMbqDataPage;
     }
 
     public function initOMbqEtUser($var, $mbqOpt) {
@@ -329,18 +461,18 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                 MbqMain::$Cache->Set('MbqEtUser_UserGroups',$var['user_id'], $usergroups);
             }
             $oMbqEtUser->userGroupIds->setOriValue($usergroups);
-            $oMbqEtUser->userEmail->setOriValue($var['user_email']);
+            $oMbqEtUser->userEmail->setOriValue(strtolower($var['user_email']));
             if(isset($var['user_avatar']))
             {
                 $oMbqEtUser->iconUrl->setOriValue(get_user_avatar_url($var['user_avatar'],$var['user_avatar_type']));
             }
 
             $oMbqEtUser->postCount->setOriValue($var['user_posts']);
-            $oMbqEtUser->userType->setOriValue(TT_check_return_user_type($var, $isCurrentLoggedUser || MbqMain::$cmd == 'get_user_info'));
-            $isOnline = false;
-            if(MbqMain::$Cache->Exists('MbqEtUserOnline',$var['user_id']))
-            {
-                $isOnline = MbqMain::$Cache->Get('MbqEtUserOnline',$var['user_id']);
+            $oMbqEtUser->userType->setOriValue(TT_check_return_user_type($var, $isCurrentLoggedUser || MbqMain::$cmd == 'get_user_info' || (isset($var['check_ban']) && $var['check_ban'])));
+            if (isset($var['is_online'])) {
+                $isOnline = $var['is_online'];
+            }else{
+                $isOnline = !$config['load_onlinetrack'] || (isset($var['session_viewonline']) && !$var['session_viewonline']) ? false : time() - ($config['load_online_time'] * 60) < $var['session_start'];
             }
             $oMbqEtUser->isOnline->setOriValue($isOnline);
 
@@ -363,6 +495,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                 $oMbqEtUser->canWhosonline->setOriValue($can_whosonline);
                 $oMbqEtUser->canProfile->setOriValue($can_whosonline);
                 $oMbqEtUser->canUploadAvatar->setOriValue($can_upload);
+                $oMbqEtUser->canActive->setOriValue($auth->acl_get('a_'));
 
                 $oMbqEtUser->maxAvatarSize->setOriValue($config['avatar_filesize']);
                 $oMbqEtUser->maxAvatarWidth->setOriValue($config['avatar_max_width']);
@@ -375,6 +508,16 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                     foreach($cachedExtensions['_allowed_post'] as $key=>$value)
                     {
                         $attach_extensions[] = $key;
+                    }
+                }
+                if (method_exists('\phpbb\files\upload', 'get_refuse_extensions')) {
+                    $disableExtensions = \phpbb\files\upload::get_refuse_extensions();
+                    $oMbqEtUser->disableExtensions->setOriValue(implode(',',$disableExtensions));
+                }
+                if (method_exists('\phpbb\files\upload', 'get_allow_extensions')) {
+                    $allow_extensions = \phpbb\files\upload::get_allow_extensions();
+                    if ($allow_extensions && is_array($allow_extensions)) {
+                        $attach_extensions = $allow_extensions;
                     }
                 }
                 $oMbqEtUser->allowedExtensions->setOriValue(implode(',',$attach_extensions));
@@ -420,13 +563,22 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                             {
                                 if(isset($profileFieldData[$profileField['key']]))
                                 {
-                                    TT_addNameValue($profileField['name'], $profileFieldData[$profileField['key']], $custom_fields_list);
+                                    if ($profileFieldData[$profileField['key']] == null && $profileField['default'] == '') {
+                                        continue; // no show if value is empty
+                                    }
+                                    TT_addNameValue($profileField['name'], $profileFieldData[$profileField['key']], $custom_fields_list, $profileField);
                                 }
                             }
                         }
                     }
                     $oMbqEtUser->customFieldsList->setOriValue($custom_fields_list);
                 }
+                $extraFields = $this->getExtraCustomFields($var);
+                if (!empty($custom_fields_list))
+                {
+                    $extraFields = array_merge($extraFields, $custom_fields_list);
+                }
+                $oMbqEtUser->customFieldsList->setOriValue($extraFields);
             }
             $oMbqEtUser->postCountdown->setOriValue($config['flood_interval']);
             $oMbqEtUser->currentAction->setOriValue($this->getUserLocation($var));
@@ -453,10 +605,10 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         }
         elseif($mbqOpt['case'] == 'byEmail')
         {
-            $email = $var;
+            $email = strtolower($var);
             $sql = "SELECT u.user_id
                 FROM " . USERS_TABLE . " u
-                WHERE u.user_email = '$email'";
+                WHERE LOWER(u.user_email) = '$email'";
             $result = $db->sql_query($sql);
             $member = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
@@ -472,28 +624,14 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             {
                 return MbqMain::$Cache->Get('MbqEtUser',$user_id);
             }
-            $sql = "    SELECT u.*
+            $sql = "    SELECT u.*, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
                         FROM " . USERS_TABLE . " AS u
+                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
                         WHERE u.user_id = '$user_id'
                     ";
             $result = $db->sql_query($sql);
             $member = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
-            if ($config['load_onlinetrack'])
-            {
-                $sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
-		FROM ' . SESSIONS_TABLE . '
-		WHERE ' . $db->sql_in_set('session_user_id', $user_id) . '
-		GROUP BY session_user_id';
-                $result = $db->sql_query($sql);
-
-                $update_time = $config['load_online_time'] * 60;
-                while ($row = $db->sql_fetchrow($result))
-                {
-                    MbqMain::$Cache->Set('MbqEtUserOnline',$row['session_user_id'], (time() - $update_time < $row['online_time'] && (($row['viewonline']) || $auth->acl_get('u_viewonline'))) ? true : false);
-                }
-                $db->sql_freeresult($result);
-            }
             return $this->initOMbqEtUser($member, array('case'=>'user_row'));
         }
     }
@@ -623,6 +761,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         $db->sql_freeresult($result);
         return $required_custom_fields;
     }
+
     public function preloadUserGroups($userRows)
     {
         global $db;
@@ -655,7 +794,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
      * @return Array
      */
     public function forgetPassword($oMbqEtUser) {
-        global $phpbb_root_path, $phpEx, $request, $user;
+        global $phpbb_root_path, $phpEx, $request, $user, $config;
 
         requireExtLibrary('fake_template');
         $template = new fake_template();
@@ -668,19 +807,44 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         overwriteRequestParam('email', $oMbqEtUser->userEmail->oriValue);
         overwriteRequestParam('submit', true,\phpbb\request\request_interface::POST);
 
+        // fix bug
+        $form_name = 'ucp_remind';
+        $creation_time	= abs(time() - 50);
+        $token_sid = ($user->data['user_id'] == ANONYMOUS && !empty($config['form_token_sid_guests'])) ? $user->session_id : '';
+        $key = sha1($creation_time . $user->data['user_form_salt'] . $form_name . $token_sid);
+        overwriteRequestParam('form_token', $key, \phpbb\request\request_interface::POST);
+        overwriteRequestParam('form_token', $key);
+        overwriteRequestParam('creation_time', $creation_time, \phpbb\request\request_interface::POST);
+        overwriteRequestParam('creation_time', $creation_time);
+
         $module = new p_master();
         $module->load('ucp', 'remind','sendpassword');
 
+        $user->setup('ucp');
         $error = $template->getTemplateVar('ERROR');
 
         if(isset($error) && !empty($error))
         {
+            $returnError = null;
             $errors = explode('<br />', $error);
             if(is_array($errors))
             {
-                 return $errors[0];
+                $returnError = strip_tags($errors[0]);
+            }else {
+                $returnError = strip_tags($error);
             }
-            return $error;
+
+            if (is_string($returnError) && strpos($returnError, str_replace('%s','',$user->lang['RETURN_INDEX'])) !== false) {
+                return true;
+            }
+            if (is_string($returnError) && strpos($returnError, $user->lang['PASSWORD_UPDATED']) !== false) {
+                return true;
+            }
+            if (!$returnError) {
+                return true;
+            }
+
+            return $returnError;
         }
 
         return true;
@@ -855,4 +1019,69 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         return $location;
     }
 
+    /**
+     * add 4 extra fields to profile custom fields
+     * user_group,
+     * birthday/age,
+     * warnings,
+     * like_received,
+     * @param $var
+     * @return array
+     */
+    private function getExtraCustomFields($var){
+        /** @var $auth phpbb\auth\auth */
+        global $user, $auth;
+
+        $birthday = $this->processUserBirthday($var['user_birthday']);
+
+        if ($birthday)
+        {
+            $extra[] = [
+                'name'  => 'Birthday',
+                'value' => $birthday,
+            ];
+        }
+
+        if ($auth->acl_getf_global('m_') || $auth->acl_get('m_warn'))
+        {
+            $extra[] = [
+                'name'  => $user->lang['WARNINGS'],
+                'value' => $var['user_warnings'],
+            ];
+        }
+
+        return $extra;
+    }
+
+    /**
+     * calculate user's birthday, if both of his month and day filled up
+     * @param $user_birthday
+     * @return string
+     */
+    private function processUserBirthday($user_birthday)
+    {
+        $birthday = '';
+
+        if ($user_birthday)
+        {
+            $user_birthday = explode('-', $user_birthday);
+
+            if (!empty(trim($user_birthday[0])) && !empty(trim($user_birthday[1])))
+            {
+                $dateObj       = \DateTime::createFromFormat('!m', trim($user_birthday[1]));
+                $birthdayMonth = $dateObj->format('M');
+                $birthdayDay   = trim($user_birthday[0]);
+                if (!empty(trim($user_birthday[2])))
+                {
+                    $birthday = $birthdayDay . ' ' . $birthdayMonth . ' ' . trim($user_birthday[2]);
+                }
+                else
+                {
+                    $birthday = $birthdayDay . ' ' . $birthdayMonth;
+                }
+            }
+        }
+
+        return $birthday;
+    }
 }

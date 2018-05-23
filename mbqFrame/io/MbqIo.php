@@ -47,8 +47,6 @@ Class MbqIo extends MbqBaseIo {
                 $ioHandleClass = 'MbqIoHandleXmlrpc';
             } elseif ($protocol == 'json') {
                 $ioHandleClass = 'MbqIoHandleJson';
-            } elseif ($protocol == 'advjson') {
-                $ioHandleClass = 'MbqIoHandleAdvJson';
             } elseif ($protocol == 'web') {
                 $ioHandleClass = 'MbqIoHandleWeb';
             } else {

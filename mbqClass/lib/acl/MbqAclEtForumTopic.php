@@ -100,6 +100,59 @@ Class MbqAclEtForumTopic extends MbqBaseAclEtForumTopic {
     }
 
     /**
+     * judge can guest new topic
+     *
+     * @param  Object  $oMbqEtForum
+     * @return  Boolean
+     */
+    public function canAclGuestNewTopic($oMbqEtForum) {
+        global $db, $auth, $user, $config, $phpbb_root_path, $phpEx, $mobiquo_config;
+        $forum_id = $oMbqEtForum->forumId->oriValue;
+        $post_data = $oMbqEtForum->mbqBind;
+
+        $user->setup('posting');
+
+        if ($post_data['forum_password'] && !check_forum_password($forum_id))
+            return getSystemString('LOGIN_FORUM');
+
+        // Check permissions
+        if ($user->data['is_bot'])  return getSystemString('NOT_AUTHORISED');
+        // Is the user able to read and post within this forum?
+        if (!$auth->acl_get('f_read', $forum_id))
+        {
+            if ($user->data['user_id'] != ANONYMOUS)
+            {
+                return getSystemString('USER_CANNOT_READ');
+            }
+
+            return getSystemString('LOGIN_EXPLAIN_POST');
+        }
+
+        if (!$auth->acl_get('f_post', $forum_id))
+        {
+            if ($user->data['user_id'] != ANONYMOUS)
+            {
+                return getSystemString('USER_CANNOT_POST');
+            }
+
+            return getSystemString('LOGIN_EXPLAIN_POST');
+        }
+
+        // Is the user able to post within this forum?
+        if ($post_data['forum_type'] != FORUM_POST)
+        {
+            return getSystemString('USER_CANNOT_FORUM_POST');
+        }
+
+        // Forum/Topic locked?
+        if ($post_data['forum_status'] == ITEM_LOCKED && !$auth->acl_get('m_edit', $forum_id))
+        {
+            return getSystemString('FORUM_LOCKED');
+        }
+        return  true;
+    }
+
+    /**
      * judge can get subscribed topic
      *
      * @return  Boolean
