@@ -390,7 +390,6 @@ Class TapatalkPush extends TapatalkBasePush {
         if($type != 'delpost' && $type != 'deltopic')
         {
             $data['dateline']    = time();
-            $data['author_ip']   = self::getClientIp();
             $data['author_ua']   = self::getClienUserAgent();
             $data['author_type'] = TT_check_return_user_type($user->data);
             $data['authorid']    = $user->data['user_id'];

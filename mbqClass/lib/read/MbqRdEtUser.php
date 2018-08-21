@@ -181,12 +181,9 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         if ($mbqOpt['case'] == 'byUserIds') {
             $result = array();
             $user_ids = implode(',',$var);
-            $sql = "    SELECT u.*,
-                        MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
+            $sql = "    SELECT u.*
                         FROM " . USERS_TABLE . " AS u
-                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
                         WHERE u.user_id in ($user_ids)
-                        GROUP BY u.user_id
                     ";
             $sqlresult = $db->sql_query($sql);
             $userRows = array();
@@ -195,6 +192,21 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                 $userRows[] = $row;
             }
             $db->sql_freeresult($sqlresult);
+            if ($config['load_onlinetrack'] && sizeof($user_ids))
+            {
+                $sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
+		FROM ' . SESSIONS_TABLE . '
+		WHERE ' . $db->sql_in_set('session_user_id', $user_ids) . '
+		GROUP BY session_user_id';
+                $result = $db->sql_query($sql);
+
+                $update_time = $config['load_online_time'] * 60;
+                while ($row = $db->sql_fetchrow($result))
+                {
+                    MbqMain::$Cache->Set('MbqEtUserOnline', $row['session_user_id'], (time() - $update_time < $row['online_time'] && (($row['viewonline']) || $auth->acl_get('u_viewonline'))) ? true : false);
+                }
+                $db->sql_freeresult($result);
+            }
             return $this->getObjsMbqEtUser($userRows, array('case'=>'byUserRows'));
         } elseif ($mbqOpt['case'] == 'byUserRows') {
             $userRows = $var;
@@ -210,7 +222,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $sql = 'SELECT s.session_user_id, s.session_ip, s.session_viewonline
 		            FROM ' . SESSIONS_TABLE . ' s
 		            WHERE s.session_time >= ' . $onlinetime .
-		            ' AND s.session_user_id <> ' . ANONYMOUS . ' GROUP BY s.session_user_id ';
+		            ' AND s.session_user_id <> ' . ANONYMOUS . ' GROUP BY s.session_user_id, s.session_ip, s.session_viewonline ';
             $result = $db->sql_query_limit($sql, $oMbqDataPage->numPerPage, $oMbqDataPage->startNum);
             $oMbqDataPage->datas = array();
             while($member = $db->sql_fetchrow($result))
@@ -325,12 +337,12 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         if (!function_exists('view_inactive_users')) {
             require_once($phpbb_root_path . '/includes/functions_admin.' . $phpEx);
         }
-        $oMbqDataPage->datas = [];
+        $oMbqDataPage->datas = array();
         $sql_where = '';
         $sql_sort = 'user_inactive_time DESC';
         $per_page = $oMbqDataPage->numPerPage;
         $start = $oMbqDataPage->startNum;
-        $inactiveUsers = [];
+        $inactiveUsers =  array();
         $inactive_count = 0;
         $start = view_inactive_users($inactiveUsers, $inactive_count, $per_page, $start, $sql_where, $sql_sort, true);
 
@@ -387,13 +399,13 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         }
         // Count the users
         $sql = 'SELECT COUNT(u.user_id) AS total_users
-                FROM ' . USERS_TABLE . " u 
+                FROM ' . USERS_TABLE . " u
                 WHERE " . $db->sql_in_set('u.user_type', $user_types) . " $sqlWhere ";
         $result = $db->sql_query($sql);
         $total_users = (int) $db->sql_fetchfield('total_users');
         $db->sql_freeresult($result);
 
-        $oMbqDataPage->datas = [];
+        $oMbqDataPage->datas = array();
         if ($total_users) {
             // Select
             $sql = 'SELECT IFNULL(s.session_time,u.user_lastvisit) as last_active,!ISNULL(s.session_time) as is_online, u.*, s.session_page, s.session_forum_id
@@ -401,9 +413,9 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                 LEFT JOIN  (SELECT session_user_id, MAX(session_time) AS session_time,session_page,session_forum_id
                     FROM ' . SESSIONS_TABLE . '
                     WHERE session_time >= ' . $isOnlineValidTime . '
-                        GROUP BY session_user_id
+                        GROUP BY session_user_id, session_page, session_forum_id
                     ) s on s.session_user_id = user_id
-                WHERE ' . $db->sql_in_set('u.user_type', $user_types) . ' ' . $sqlWhere . ' 
+                WHERE ' . $db->sql_in_set('u.user_type', $user_types) . ' ' . $sqlWhere . '
                 ORDER BY last_active DESC, u.user_lastvisit DESC';
 
             $result = $db->sql_query_limit($sql, $oMbqDataPage->numPerPage, $oMbqDataPage->startNum);
@@ -608,7 +620,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $email = strtolower($var);
             $sql = "SELECT u.user_id
                 FROM " . USERS_TABLE . " u
-                WHERE LOWER(u.user_email) = '$email'";
+                WHERE LOWER(u.user_email) = '" . $db->sql_escape($email) . "'";
             $result = $db->sql_query($sql);
             $member = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
@@ -619,19 +631,32 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             return null;
         }
         else if ($mbqOpt['case'] == 'byUserId') {
-            $user_id = $var;
+            $user_id = intval($var);
             if(MbqMain::$Cache->Exists('MbqEtUser',$user_id))
             {
                 return MbqMain::$Cache->Get('MbqEtUser',$user_id);
             }
-            $sql = "    SELECT u.*, MAX(s.session_time) as session_time, MIN(s.session_viewonline) AS session_viewonline, session_start, session_page, session_forum_id
-                        FROM " . USERS_TABLE . " AS u
-                        LEFT JOIN " . SESSIONS_TABLE . " AS s ON u.user_id = s.session_user_id
-                        WHERE u.user_id = '$user_id'
-                    ";
+
+            $sql = "SELECT * FROM " . USERS_TABLE . " AS u WHERE u.user_id = '$user_id'";
             $result = $db->sql_query($sql);
             $member = $db->sql_fetchrow($result);
             $db->sql_freeresult($result);
+
+            if ($config['load_onlinetrack'])
+            {
+                $sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
+		FROM ' . SESSIONS_TABLE . '
+		WHERE ' . $db->sql_in_set('session_user_id', $user_id) . '
+		GROUP BY session_user_id';
+                $result = $db->sql_query($sql);
+
+                $update_time = $config['load_online_time'] * 60;
+                while ($row = $db->sql_fetchrow($result))
+                {
+                    MbqMain::$Cache->Set('MbqEtUserOnline', $row['session_user_id'], (time() - $update_time < $row['online_time'] && (($row['viewonline']) || $auth->acl_get('u_viewonline'))) ? true : false);
+                }
+                $db->sql_freeresult($result);
+            }
             return $this->initOMbqEtUser($member, array('case'=>'user_row'));
         }
     }
@@ -1033,21 +1058,21 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         global $user, $auth;
 
         $birthday = $this->processUserBirthday($var['user_birthday']);
-
+        $extra = array();
         if ($birthday)
         {
-            $extra[] = [
+            $extra[] = array(
                 'name'  => 'Birthday',
                 'value' => $birthday,
-            ];
+            );
         }
 
         if ($auth->acl_getf_global('m_') || $auth->acl_get('m_warn'))
         {
-            $extra[] = [
+            $extra[] =  array(
                 'name'  => $user->lang['WARNINGS'],
                 'value' => $var['user_warnings'],
-            ];
+            );
         }
 
         return $extra;
@@ -1064,16 +1089,17 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
 
         if ($user_birthday)
         {
+	        $user_birthday = preg_replace('/\s/s', '', $user_birthday);
             $user_birthday = explode('-', $user_birthday);
 
-            if (!empty(trim($user_birthday[0])) && !empty(trim($user_birthday[1])))
+            if (isset($user_birthday[0]) && isset($user_birthday[1]) && $user_birthday[0] && $user_birthday[1])
             {
-                $dateObj       = \DateTime::createFromFormat('!m', trim($user_birthday[1]));
+                $dateObj       = \DateTime::createFromFormat('!m', $user_birthday[1]);
                 $birthdayMonth = $dateObj->format('M');
-                $birthdayDay   = trim($user_birthday[0]);
-                if (!empty(trim($user_birthday[2])))
+                $birthdayDay   = $user_birthday[0];
+                if (isset($user_birthday[2]) && $user_birthday[2])
                 {
-                    $birthday = $birthdayDay . ' ' . $birthdayMonth . ' ' . trim($user_birthday[2]);
+                    $birthday = $birthdayDay . ' ' . $birthdayMonth . ' ' . $user_birthday[2];
                 }
                 else
                 {

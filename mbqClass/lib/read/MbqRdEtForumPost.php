@@ -548,12 +548,11 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
             //$oMbqEtForumPost->allowSmilies->setOriValue($row['bind']['enable_smilies'] ? true : false);
             //$oMbqEtForumPost->position->setOriValue($row['prev_posts'] + 1);
             $oMbqEtForumPost->canThank->setOriValue(isset($row['bind']['can_thank']) && $row['bind']['can_thank']);
+   			$oMbqEtForumPost->canUnthank->setOriValue(isset($row['bind']['can_unthank']) && $row['bind']['can_unthank']);
 			$oMbqEtForumPost->thankCount->setOriValue($row['bind']['post_author_id']);
-			$oMbqEtForumPost->canUnthank->setOriValue(isset($row['bind']['can_unthank']) && $row['bind']['can_unthank']);
-            //$oMbqEtForumPost->canLike->setOriValue($var['post_author_id']);
-            //$oMbqEtForumPost->isLiked->setOriValue($var['post_author_id']);
+
+            //$oMbqEtForumPost->thankCount->setOriValue($row['bind']['post_author_id']);
             $oMbqEtForumPost->isThanked->setOriValue(isset($row['bind']['thanks_info']));
-            //$oMbqEtForumPost->likeCount->setOriValue($var['post_author_id']);
 
             $oMbqEtForumPost->showReason->setOriValue($auth->acl_get('m_edit', $forum_id));
             $oMbqEtForumPost->editReason->setOriValue(isset($row['bind']['post_edit_reason']) ? $row['bind']['post_edit_reason'] : '');

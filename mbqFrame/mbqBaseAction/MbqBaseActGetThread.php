@@ -6,11 +6,11 @@ defined('MBQ_IN_IT') or exit;
  * get_thread action
  */
 Abstract Class MbqBaseActGetThread extends MbqBaseAct {
-    
+
     public function __construct() {
         parent::__construct();
     }
-    
+
     function getInput()
     {
         $in = new stdClass();
@@ -32,7 +32,7 @@ Abstract Class MbqBaseActGetThread extends MbqBaseAct {
         $in->oMbqDataPage = $oMbqDataPage;
         return $in;
     }
-    
+
     /**
      * action implement
      */
@@ -40,7 +40,7 @@ Abstract Class MbqBaseActGetThread extends MbqBaseAct {
         if (!MbqMain::$oMbqConfig->moduleIsEnable('forum')) {
             MbqError::alert('', "Not support module forum!", '', MBQ_ERR_NOT_SUPPORT);
         }
-        
+
         $oMbqRdEtForumTopic = MbqMain::$oClk->newObj('MbqRdEtForumTopic');
         if ($oMbqEtForumTopic = $oMbqRdEtForumTopic->initOMbqEtForumTopic($in->topicId, array('case' => 'byTopicId'))) {
             $oMbqAclEtForumTopic = MbqMain::$oClk->newObj('MbqAclEtForumTopic');
@@ -70,16 +70,16 @@ Abstract Class MbqBaseActGetThread extends MbqBaseAct {
                 $oMbqWrEtForumTopic->resetForumTopicSubscription($oMbqEtForumTopic);
             } else {
                 if (MbqMain::hasLogin()) {
-                    $reason = ['reason' => MBQ_ERR_NOT_PERMISSION];
+                    $reason = array('reason' => MBQ_ERR_NOT_PERMISSION);
                 }else{
-                    $reason = ['reason' => MBQ_ERR_LOGIN_REQUIRED];
+                    $reason = array('reason' => MBQ_ERR_LOGIN_REQUIRED);
                 }
                 MbqError::alert('', $aclResult, $reason, MBQ_ERR_APP);
             }
         } else {
-            $reason = ['reason' => MBQ_ERR_DATA_NOT_FOUND];
+            $reason = array('reason' => MBQ_ERR_DATA_NOT_FOUND);
             MbqError::alert('', "This topic does not exist or you do not have permission to access it!", $reason, MBQ_ERR_APP);
         }
     }
-  
+
 }

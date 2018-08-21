@@ -359,7 +359,7 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
     public function initOMbqEtForum($var, $mbqOpt)
     {
         if ($mbqOpt['case'] == 'byForumId') {
-            $forumId = $var;
+            $forumId = intval($var);
             if(MbqMain::$Cache->Exists('MbqEtForum',$forumId))
             {
                 return MbqMain::$Cache->Get('MbqEtForum',$forumId);

@@ -590,7 +590,10 @@ Abstract Class MbqBaseRdEtForumTopic extends MbqBaseRd {
     public function returnApiArrDataForumTopic($objsMbqEtForumTopic) {
         $data = array();
         foreach ($objsMbqEtForumTopic as $oMbqEtForumTopic) {
-            $data[] = $this->returnApiDataForumTopic($oMbqEtForumTopic);
+            if ($oMbqEtForumTopic)
+            {
+                $data[] = $this->returnApiDataForumTopic($oMbqEtForumTopic);
+            }
         }
         return $data;
     }

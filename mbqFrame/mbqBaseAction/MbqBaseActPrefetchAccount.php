@@ -40,24 +40,30 @@ Abstract Class MbqBaseActPrefetchAccount extends MbqBaseAct {
         {
             $this->data['result'] = false;
             $this->data['result_text'] = 'User email does not exists';
-            return;
         }
-        
-        $oMbqEtUser = $result;
-        $this->data['result'] = true;
-        if ($oMbqEtUser->userId->hasSetOriValue()) {
-            $this->data['user_id'] = (string) $oMbqEtUser->userId->oriValue;
+        else
+        {
+            $oMbqEtUser           = $result;
+            $this->data['result'] = true;
+            if ($oMbqEtUser->userId->hasSetOriValue())
+            {
+                $this->data['user_id'] = (string)$oMbqEtUser->userId->oriValue;
+            }
+            if ($oMbqEtUser->loginName->hasSetOriValue())
+            {
+                $this->data['login_name'] = (string)$oMbqEtUser->loginName->oriValue;
+            }
+            $this->data['display_name'] = (string)$oMbqEtUser->getDisplayName();
+            if ($oMbqEtUser->iconUrl->hasSetOriValue())
+            {
+                $this->data['avatar'] = (string)$oMbqEtUser->iconUrl->oriValue;
+            }
+            else
+            {
+                $this->data['avatar'] = '';
+            }
         }
-        if ($oMbqEtUser->loginName->hasSetOriValue()) {
-            $this->data['login_name'] = (string) $oMbqEtUser->loginName->oriValue;
-        }
-        $this->data['display_name'] = (string) $oMbqEtUser->getDisplayName();
-        if ($oMbqEtUser->iconUrl->hasSetOriValue()) {
-            $this->data['avatar'] = (string) $oMbqEtUser->iconUrl->oriValue;
-        } else {
-            $this->data['avatar'] = '';
-        }
-            
+        // custom field is necessary, because there might be some custom field is required during login
         $custom_register_fields = $oMbqRdEtUser->getCustomRegisterFields();
         if(isset($custom_register_fields))
         {

@@ -430,7 +430,10 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
 			$avatar['width'] = $config['avatar_max_width'];
 			$avatar['height'] = $config['avatar_max_height'];
 			$error = array();
-			$upload_response = avatar_remote($avatar, $error);
+			if (function_exists('avatar_remote')) 
+			{
+                $upload_response = avatar_remote($avatar, $error);   
+			}
 
             if(empty($error))
             {

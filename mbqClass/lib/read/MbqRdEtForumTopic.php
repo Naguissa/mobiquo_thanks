@@ -343,8 +343,11 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
                     $topic_ids = $var;
                     if(is_array($topic_ids))
                     {
+                        $topic_ids = array_map('intval', $topic_ids);
                         $topic_ids = implode(',',$topic_ids);
                     }
+                    else
+                        $topic_ids = intval($topic_ids);
                     $sql = 'SELECT t.*, u.user_avatar, u.user_avatar_type,bm.topic_id as bookmarked
                     FROM ' . TOPICS_TABLE . ' t
                         LEFT JOIN ' . USERS_TABLE . ' u ON (t.topic_poster = u.user_id)
