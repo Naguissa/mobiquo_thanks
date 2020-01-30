@@ -37,12 +37,14 @@ else
     $app_android_url_scheme = 'tapatalk';
 }
 
+/* valid page_type: index, forum, topic, post, pm, search, profile, online, other*/
+$page_type = isset($page_type) && $page_type ? $page_type : 'other';
+$app_location = isset($app_location) ? trim($app_location) : '';
+
 /* add google meta */
 if(!isset($google_indexing_enabled) || $google_indexing_enabled)
 {
-    /* valid page_type: index, forum, topic, post, pm, search, profile, online, other*/
-    $page_type = isset($page_type) && $page_type ? $page_type : 'other';
-    $app_location = isset($app_location) ? trim($app_location) : '';
+
 
     if (in_array($page_type, array('topic', 'post', 'home')) && $app_location)
     {
@@ -62,6 +64,21 @@ if(!isset($google_indexing_enabled) || $google_indexing_enabled)
 // add android native banner and ios native banner
 if(!isset($app_banner_enable) || $app_banner_enable)
 {
+
+    /* display smart banner */
+    $app_banner_head = '';
+    $app_banner_js_link = $board_url . '/' . tt_html_escape($tapatalk_dir_name) .'/smartbanner/appbanner.js?v=5.3';
+
+    $app_banner_head = '
+    <!-- Tapatalk Banner head start -->
+    <script type="text/javascript">
+        var app_location       = "'.tt_html_escape($app_location, true).'";
+        var app_ios_url_scheme     = "'.tt_html_escape($app_ios_url_scheme).'";
+        var app_android_url_scheme     = "'.tt_html_escape($app_android_url_scheme).'";
+    </script>
+   <script src="https://www.tapatalk.com/groups/static/assets/javascript/smartbanner.js?ver=1.0" type="text/javascript"></script>
+    <!-- Tapatalk Banner head end-->';
+    $app_head_include .= $app_banner_head;
     // add google native app manifest link
     if ($app_android_id == 'com.quoord.tapatalkpro.activity')
     {
@@ -93,7 +110,7 @@ if(!isset($app_banner_enable) || $app_banner_enable)
 
 function tt_html_escape($str)
 {
-    return addslashes(htmlspecialchars($str, ENT_NOQUOTES, "UTF-8"));
+    return addslashes(str_replace('&amp;','&',htmlspecialchars($str, ENT_NOQUOTES, "UTF-8")));
 }
 
 function tt_add_channel($url, $channel)

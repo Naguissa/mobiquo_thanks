@@ -31,7 +31,8 @@ Class MbqEtPc extends MbqBaseEntity {
     public $objsRecipientMbqEtUser;   /* users be invited to join this private conversation */
     public $objsMbqEtPcMsg;
     public $oFirstMbqEtPcMsg;
-    
+    public $canUpload;
+
     public function __construct() {
         parent::__construct();
         $this->convId = clone MbqMain::$simpleV;

@@ -41,7 +41,14 @@ Abstract Class MbqBaseActLogin extends MbqBaseAct {
             MbqError::alert('', "Not support module user!", '', MBQ_ERR_NOT_SUPPORT);
         }
         $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
-        $result = $oMbqRdEtUser->login($in->login, $in->password, $in->anonymous, $in->trustCode);
+        if($in->login == null && $in->password == null && MbqMain::$oCurMbqEtUser != null)
+		{
+			$result = true;
+		}
+		else
+		{
+			$result = $oMbqRdEtUser->login($in->login, $in->password, $in->anonymous, $in->trustCode);
+		}
         if ($result === true) {
             $this->data['result'] = true;
             $data1 = $oMbqRdEtUser->returnApiDataUser(MbqMain::$oCurMbqEtUser);

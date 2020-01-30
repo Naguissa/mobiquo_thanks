@@ -2,7 +2,11 @@
 function getPHPBBVersion()
 {
        global $phpEx,$config;
-       if(substr( $config['version'], 0, 3 ) === '3.2')
+        if(substr( $config['version'], 0, 3 ) === '3.3')
+        {
+            $version = '3.3';
+        }
+       else if(substr( $config['version'], 0, 3 ) === '3.2')
        {
            $version = '3.2';
        }
@@ -655,6 +659,20 @@ function tt_tapatalk_process_bbcode_quote_callback($matches)
         }
         else
         {
+            $ip = strpos($matches[1],'post_id=');
+            $it = strpos($matches[1],'time=');
+            $iu = strpos($matches[1],'user_id=');
+
+            if($ip != false && $it!= false && $iu !=false ){
+                $name= substr($matches[1],0,$ip-1);
+                if(substr($name,-1) == '"'){
+                    $name = substr($name,0,-1);
+                }
+                $pid = substr($matches[1],$ip+8 ,$it-$ip-9);
+//                $time = substr($matches[1],$it+5 ,$iu-$it-6);
+                $uid = substr($matches[1],$iu+8);
+                return "[quote uid=".$uid." name=\"".$name."\" post=".$pid."]";
+            }
             $userid = get_user_id_by_name($matches[1]);
             if(!empty($userid))
             {
@@ -1161,6 +1179,15 @@ function check_error_status(&$str)
             {
                 return true;
             }
+        case 'forget_password':
+            if (strpos($str, $user->lang['PASSWORD_UPDATED']) === false)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
     }
 
     return false;
@@ -1623,7 +1650,19 @@ function push_table_exists()
 	}
     else
     {
-        $result = $db->sql_query('CREATE TABLE ' . $table_prefix.'tapatalk_users (userid int, updated timestamp)', 1);
+        $result = $db->sql_query("CREATE TABLE `" . $table_prefix."tapatalk_users` (
+  `userid` int(10) unsigned NOT NULL DEFAULT '0',
+  `announcement` smallint(4) unsigned NOT NULL DEFAULT '1',
+  `pm` smallint(4) unsigned NOT NULL DEFAULT '1',
+  `subscribe` smallint(4) unsigned NOT NULL DEFAULT '1',
+  `quote` smallint(4) unsigned NOT NULL DEFAULT '1',
+  `liked` smallint(4) unsigned NOT NULL DEFAULT '1',
+  `tag` smallint(4) unsigned NOT NULL DEFAULT '1',
+  `newtopic` smallint(4) unsigned NOT NULL DEFAULT '1',
+  `updated` int(11) unsigned DEFAULT NULL,
+  PRIMARY KEY (`userid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+", 1);
         if ($result)
         {
         	$db->sql_freeresult($result);

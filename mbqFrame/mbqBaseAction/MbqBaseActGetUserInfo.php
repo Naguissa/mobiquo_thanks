@@ -6,11 +6,11 @@ defined('MBQ_IN_IT') or exit;
  * get_user_info action
  */
 Abstract Class MbqBaseActGetUserInfo extends MbqBaseAct {
-
+    
     public function __construct() {
         parent::__construct();
     }
-
+    
     function getInput()
     {
         $in = new stdClass();
@@ -26,7 +26,7 @@ Abstract Class MbqBaseActGetUserInfo extends MbqBaseAct {
         }
         return $in;
     }
-
+    
     /**
      * action implement
      */
@@ -34,7 +34,7 @@ Abstract Class MbqBaseActGetUserInfo extends MbqBaseAct {
         if (!MbqMain::$oMbqConfig->moduleIsEnable('user')) {
             MbqError::alert('', "Not support module user!", '', MBQ_ERR_NOT_SUPPORT);
         }
-
+   
         $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');
         if ($in->userId) {
             $result = $oMbqRdEtUser->initOMbqEtUser($in->userId, array('case' => 'byUserId'));
@@ -46,8 +46,8 @@ Abstract Class MbqBaseActGetUserInfo extends MbqBaseAct {
         } else if ($result != null) {
             MbqError::alert('', $result, '', MBQ_ERR_APP);
         } else {
-            MbqError::alert('', "User not found!", array('reason' => MBQ_ERR_DATA_NOT_FOUND, 'error' => 'User not found!'), MBQ_ERR_APP);
+            MbqError::alert('', "User not found!", ['reason' => MBQ_ERR_DATA_NOT_FOUND, 'error' => 'User not found!'], MBQ_ERR_APP);
         }
     }
-
+  
 }

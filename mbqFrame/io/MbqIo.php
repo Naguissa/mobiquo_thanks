@@ -70,7 +70,10 @@ Class MbqIo extends MbqBaseIo {
                     $_POST['TapatalkParamsLog'][$removeParam] = '********';
                 }
             }
-            $_POST['TapatalkParamsLog']['useragent'] = $_SERVER['HTTP_USER_AGENT'];
+            if(isset($_SERVER['HTTP_USER_AGENT']))
+            {
+                $_POST['TapatalkParamsLog']['useragent'] = $_SERVER['HTTP_USER_AGENT'];
+            }
         }
         if(function_exists('TT_logCall'))
         {

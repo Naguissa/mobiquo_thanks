@@ -14,6 +14,13 @@ Abstract Class MbqBaseActGetBoardStat extends MbqBaseAct {
     function getInput()
     {
         $in = new stdClass();
+        if(MbqMain::isJsonProtocol())
+        {
+          
+        }
+        else
+        {
+        }
         return $in;
     }
     

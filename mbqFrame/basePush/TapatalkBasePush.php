@@ -9,7 +9,7 @@ if (!class_exists('MbqCommonConfig')) {
  * push base class
  */
 Abstract Class TapatalkBasePush {
-    
+
     protected $childReference;
 
     protected $pushStatus = false; //judged by push flags in config/settings and curl_init,allow_url_fopen
@@ -19,7 +19,8 @@ Abstract Class TapatalkBasePush {
     protected $imActive = false;    //judge current user is active user by tapatalk_push_user table
     protected $siteUrl;
     protected $supportedPushType = array();
-    
+    public $error = array();
+    public $connection;
     //init
     public function __construct($ref) {
         $this->childReference = $ref;
@@ -122,10 +123,9 @@ Abstract Class TapatalkBasePush {
         }
 
         if($pushTest){
-            $connection = new classTTConnection();
-            $connection->timeout = 5;
-            $error = $connection->errors;
-            return $connection->getContentFromSever($push_url, $data, 'post', false);
+            $this->connection = new classTTConnection();
+            $this->connection->timeout = 5;
+            return $this->connection->getContentFromSever($push_url, $data, 'post', false);
         }
 
         //Initial this key in modSettings
@@ -169,20 +169,32 @@ Abstract Class TapatalkBasePush {
         return true;
     }
 
+    public static function getClientIp()
+    {
+        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+            $ip = $_SERVER['HTTP_CLIENT_IP'];
+        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        } else {
+            $ip = $_SERVER['REMOTE_ADDR'];
+        }
+        return $ip;
+    }
+
     public static function getClienUserAgent()
     {
         $useragent = $_SERVER['HTTP_USER_AGENT'];
         return $useragent;
     }
-    
+
     public static function getIsFromApp()
     {
         return defined('IN_MOBIQUO') ? 1 : 0;
     }
     abstract function get_push_slug();
     abstract function set_push_slug($slug = null);
-    
-    
+
+
      public function callMethod($methodName, $p = NULL) {
         if (method_exists($this, $methodName)) {   //!!!
             if ($p)
@@ -191,7 +203,7 @@ Abstract Class TapatalkBasePush {
                 return $this->$methodName();
         }
      }
-     
+
     public function getTagList($content)
     {
         /**
@@ -205,13 +217,13 @@ Abstract Class TapatalkBasePush {
             {
                 if ($tag) $tags[1][$index] = $tag;
             }
-    
+
             return array_unique($tags[1]);
         }
-    
+
         return array();
     }
-    
+
     protected abstract function doInternalPushThank($p);
 
     protected abstract function doInternalPushReply($p);
@@ -233,5 +245,9 @@ Abstract Class TapatalkBasePush {
     protected abstract function doInternalPushDeleteTopic($p);
 
     protected abstract function doInternalPushDeletePost($p);
+    public function testPush()
+    {
+        return $this->do_push_request(array('test'=>1),true);
+    }
 }
 

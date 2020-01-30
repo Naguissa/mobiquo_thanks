@@ -28,6 +28,16 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
 	{
 	      require_once($phpbb_root_path .'/includes/functions_user.'. $phpEx);
 	}
+        if($login == null && $password == null)
+        {
+            $userId = $user->data['user_id'];
+            if($userId != ANONYMOUS)
+            {
+                MbqMain::$oMbqAppEnv->currentUserInfo = $user->data;
+                $this->initOCurMbqEtUser($userId);
+                return true;
+            }
+        }
         $user->session_kill();
 
         $user->setup('ucp');
@@ -59,6 +69,8 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
 
             return str_replace('%s', '', strip_tags($user->lang[$login_result['error_msg']]));
         }
+
+
 
         return $this->doLogin($user);
     }
@@ -192,7 +204,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
                 $userRows[] = $row;
             }
             $db->sql_freeresult($sqlresult);
-            if ($config['load_onlinetrack'] && sizeof($user_ids))
+            if ($config['load_onlinetrack'] && sizeof($var))
             {
                 $sql = 'SELECT session_user_id, MAX(session_time) as online_time, MIN(session_viewonline) AS viewonline
 		FROM ' . SESSIONS_TABLE . '
@@ -457,7 +469,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             $oMbqEtUser->userName->setOriValue($var['username']);
             if(MbqMain::$Cache->Exists('MbqEtUser_UserGroups',$var['user_id']))
             {
-                $usergroups[] = MbqMain::$Cache->Get('MbqEtUser_UserGroups',$var['user_id']);
+                $usergroups = MbqMain::$Cache->Get('MbqEtUser_UserGroups',$var['user_id']);
             }
             else
             {
@@ -842,10 +854,10 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
         overwriteRequestParam('creation_time', $creation_time, \phpbb\request\request_interface::POST);
         overwriteRequestParam('creation_time', $creation_time);
 
+        $user->setup('ucp');
         $module = new p_master();
         $module->load('ucp', 'remind','sendpassword');
 
-        $user->setup('ucp');
         $error = $template->getTemplateVar('ERROR');
 
         if(isset($error) && !empty($error))

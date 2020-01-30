@@ -75,7 +75,7 @@ Abstract Class MbqBaseActSignIn extends MbqBaseAct {
                 {
                     $this->TTVerify($in->token, $in->code);
                 }
-                $accountIsValidated =  $this->verified && strtolower($this->TTEmail) == strtolower($in->email);
+                $accountIsValidated =  $this->verified && $this->TTEmail == $in->email;
                 $this->createUser($in->email, $in->username, $in->password, $in->customRegisterFields, $accountIsValidated);
                 $result = $this->loginUser($in->trustCode);
             }

@@ -42,11 +42,11 @@ Abstract Class MbqBaseCm {
         $str = preg_replace('/\<font [^\>]*?\>(.*?)\<\/font\>/is', '$1', $str);
         $str = preg_replace('/\<font\>(.*?)\<\/font\>/is', '$1', $str);
         $str = preg_replace('/\[quote[^\]]*?\].*?\[\/quote\]/is', '', $str);
-        $str = preg_replace_callback('/\[url\=(.*?)\](.*?)\[\/url\]/is', create_function('$matches','return ($matches[1] == $matches[2]) ? "[emoji288]" : $matches[2];'), $str);
+        $str = preg_replace_callback('/\[url\=(.*?)\](.*?)\[\/url\]/is', function($matches){ return ($matches[1] == $matches[2]) ? "[emoji288]" : $matches[2];}, $str);
         $str = preg_replace('/\[url\](.*?)\[\/url\]/is', '[emoji288]', $str);
-        $str = preg_replace_callback('/\[email\=(.*?)\](.*?)\[\/email\]/is', create_function('$matches','return ($matches[1] == $matches[2]) ? "[emoji394]" : $matches[2];'), $str);
+        $str = preg_replace_callback('/\[email\=(.*?)\](.*?)\[\/email\]/is', function($matches){ return ($matches[1] == $matches[2]) ? "[emoji394]" : $matches[2];}, $str);
         $str = preg_replace('/\[email\](.*?)\[\/email\]/is', '[emoji394]', $str);
-        $str = preg_replace_callback('/\[iurl\=(.*?)\](.*?)\[\/iurl\]/is', create_function('$matches','return ($matches[1] == $matches[2]) ? "[emoji288]" : $matches[2];'), $str);
+        $str = preg_replace_callback('/\[iurl\=(.*?)\](.*?)\[\/iurl\]/is', function($matches){ return ($matches[1] == $matches[2]) ? "[emoji288]" : $matches[2];}, $str);
         $str = preg_replace('/\[iurl\](.*?)\[\/iurl\]/is', '[emoji288]', $str);
         $str = preg_replace('/\[img[^\]]*?\].*?\[\/img\]/is', '[emoji328]', $str);
         $str = preg_replace('/\[youtube[^\]]*?\].*?\[\/youtube\]/is', '[emoji327]', $str);
@@ -71,14 +71,14 @@ Abstract Class MbqBaseCm {
         $str = preg_replace('/\r\n/', ' ', $str);
         $str = preg_replace('/[\n|\r|\t]/', ' ', $str);
         //remove useless bbcode begin
-        $str = preg_replace_callback('/\[([^\/]*?)\]/i', create_function('$matches','
+        $str = preg_replace_callback('/\[([^\/]*?)\]/i', function($matches){
         $v = strtolower($matches[1]);
         if (strpos($v, "emoji") === 0 ||strpos($v, "quote") === 0 || strpos($v, "url") === 0 || strpos($v, "img") === 0 || strpos($v, "v") === 0 || strpos($v, "attach") === 0 || strpos($v, "php") === 0 || strpos($v, "html") === 0 || strpos($v, "spoiler") === 0 || strpos($v, "thread") === 0 || strpos($v, "topic") === 0 || strpos($v, "post") === 0 || strpos($v, "ftp") === 0 || strpos($v, "sql") === 0 || strpos($v, "xml") === 0 || strpos($v, "hide") === 0 || strpos($v, "ebay") === 0 || strpos($v, "map") === 0) {
             return "[$matches[1]]";
         } else {
             return "";
         }
-        '), $str);
+        }, $str);
         $str = preg_replace('/\[\/[^\]]*?\]/i', '', $str);
         //remove useless bbcode end
         $str = html_entity_decode($str, ENT_QUOTES, 'UTF-8');

@@ -6,11 +6,11 @@ defined('MBQ_IN_IT') or exit;
  * get_topic action
  */
 Abstract Class MbqBaseActGetTopic extends MbqBaseAct {
-
+    
     public function __construct() {
         parent::__construct();
     }
-
+    
     function getInput()
     {
         $in = new stdClass();
@@ -32,7 +32,7 @@ Abstract Class MbqBaseActGetTopic extends MbqBaseAct {
         $in->oMbqDataPage = $oMbqDataPage;
         return $in;
     }
-
+    
     /**
      * action implement
      */
@@ -40,7 +40,7 @@ Abstract Class MbqBaseActGetTopic extends MbqBaseAct {
         if (!MbqMain::$oMbqConfig->moduleIsEnable('forum')) {
             MbqError::alert('', "Not support module forum!", '', MBQ_ERR_NOT_SUPPORT);
         }
-
+       
         $oMbqRdEtForum = MbqMain::$oClk->newObj('MbqRdEtForum');
         if ($oMbqEtForum = $oMbqRdEtForum->initOMbqEtForum($in->forumId, array('case' => 'byForumId'))) {
             $oMbqAclEtForumTopic = MbqMain::$oClk->newObj('MbqAclEtForumTopic');
@@ -71,15 +71,15 @@ Abstract Class MbqBaseActGetTopic extends MbqBaseAct {
                 }
             } else {
                 if (MbqMain::hasLogin()) {
-                    $reason = array('reason' => MBQ_ERR_NOT_PERMISSION);
+                    $reason = ['reason' => MBQ_ERR_NOT_PERMISSION];
                 }else{
-                    $reason = array('reason' => MBQ_ERR_LOGIN_REQUIRED);
+                    $reason = ['reason' => MBQ_ERR_LOGIN_REQUIRED];
                 }
                 MbqError::alert('',$aclResult, $reason, MBQ_ERR_APP);
             }
         } else {
-            MbqError::alert('', "Need valid forum id!", array('reason' => MBQ_ERR_DATA_NOT_FOUND, 'error' => "Need valid forum id!"), MBQ_ERR_APP);
+            MbqError::alert('', "Need valid forum id!", ['reason' => MBQ_ERR_DATA_NOT_FOUND, 'error' => "Need valid forum id!"], MBQ_ERR_APP);
         }
     }
-
+  
 }

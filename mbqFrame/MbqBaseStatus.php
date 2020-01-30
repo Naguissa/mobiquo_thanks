@@ -11,6 +11,7 @@ abstract class MbqBaseStatus
     abstract protected function GetForumUrl();
     abstract protected function GetBYOInfo();
     abstract protected function GetOtherPlugins();
+
     function __construct()
     {
         if(isset($_POST['command']))
@@ -109,6 +110,10 @@ abstract class MbqBaseStatus
             return true;
         }
         return false;
+    }
+    protected function FilePermissionOthers()
+    {
+        return array("result"=>1, "description"=>"N/A");
     }
     private function Doupdate()
     {
@@ -258,6 +263,7 @@ abstract class MbqBaseStatus
         $result['filePermission'] =substr(sprintf('%o', fileperms($mobiquoDirectory .'mobiquo.php')), -4);
         $result['canExecuteMobiquoFile'] = is_readable($mobiquoDirectory.'mobiquo.php') ? true : false;
         $result['canExecuteUploadFile'] = is_readable($mobiquoDirectory.'upload.php') ? true : false;
+        $result['filePermissionOthers'] = $this->FilePermissionOthers();
         return $result;
     }
     public function TestPush()
@@ -266,6 +272,7 @@ abstract class MbqBaseStatus
         $slug = @unserialize($this->GetPushSlug());
         if($slug)
         {
+            $result['slugOrigin'] = 'DB';
             $result['slugMaxTimes'] = $slug[0];             //max push failed attempt times in period
             $result['slugMaxTimesInPeriod'] = $slug[1];     //the limitation period
             $result['slugResult'] = $slug[2];               //indicate if the output is valid of not
@@ -278,6 +285,7 @@ abstract class MbqBaseStatus
         }
         else
         {
+            $result['slugOrigin'] = 'default';
             $result['slugMaxTimes'] = 3;             //max push failed attempt times in period
             $result['slugMaxTimesInPeriod'] = 300;     //the limitation period
             $result['slugResult'] = 1;               //indicate if the output is valid of not
@@ -288,6 +296,11 @@ abstract class MbqBaseStatus
             $result['slugStickTime'] = 600;            //how long will it be sticked
             $result['slugSave'] = 1;                 //indicate if you need to save the slug into db
         }
+        include_once(MBQ_PUSH_PATH . 'TapatalkPush.php');
+        $tapatalkPush  = new TapatalkPush();
+        $result['pushTest'] = $tapatalkPush->testPush();
+        $result['pushRawHeaders'] = '<pre>' . $tapatalkPush->connection->raw_headers . '</pre>';
+        $result['pushError'] = implode('<br>',$tapatalkPush->connection->error);
         return $result;
     }
     public function ResetBYOInfo()
@@ -606,6 +619,9 @@ abstract class MbqBaseStatus
                             <br />
                             Can execute upload.php file:
                             <span id="filePermissionsCanExecuteUploadFile">Loading...</span>
+                            <br />
+                            Extra file permissions:
+                            <span id="filePermissionsOthers">Loading...</span>
                         </div>
                     </div>
                     <div class="panel panel-default" id="panelPush">
@@ -617,6 +633,9 @@ abstract class MbqBaseStatus
                         <div class="panel-body">
                             Tapatalk Push API key set:
                             <span id="pushApikey">Loading...</span>
+                            <br />
+                            Origin:
+                            <span id="slugOrigin">Loading...</span>
                             <br />
                             Max push failed attempt times in period:
                             <span id="slugMaxTimes">Loading...</span>
@@ -645,6 +664,15 @@ abstract class MbqBaseStatus
                             Indicate if you need to save the slug into db:
                             <span id="slugSave">Loading...</span>
                             <br />
+                            <br />
+                            Push Test result:
+                            <span id="pushTest">Loading...</span>
+                            <br />
+                            Push Test error:
+                            <span id="pushError">Loading...</span>
+                            <br />
+                            Push Raw Headers:
+                            <span id="pushRawHeaders">Loading...</span>
                         </div>
                     </div>
 
@@ -906,7 +934,8 @@ abstract class MbqBaseStatus
                 SetSpan('filePermissionsFiles', 'black', 'Loading...');
                 SetSpan('filePermissionsCanExecuteMobiquoFile', 'black', 'Loading...');
                 SetSpan('filePermissionsCanExecuteUploadFile', 'black', 'Loading...');
-
+                SetSpan('filePermissionsOthers', 'black', 'Loading...');
+                        
                 SetPanel('panelFilePermissions', 'panel-default');
 
                 $.post('status.php', { command: 'testFilePermission', sid: sid, X_TT: xtt })
@@ -931,6 +960,10 @@ abstract class MbqBaseStatus
                         SetSpan('filePermissionsCanExecuteUploadFile', 'red', 'No. The file upload.php need to be executable to allow plugin accept attachments, please set his permission to something that allow execute that file (eg. 755).');
                         resultFilePermission = SetTestResult(resultFilePermission, -1);
                     }
+                    SetSpan('filePermissionsOthers', 'dark-gray', result.filePermissionOthers.description);
+                    if(result.filePermissionOthers.result === -1)
+            {resultFilePermission = SetTestResult(resultFilePermission, -1);}
+          
                     testResult.filePermission = resultFilePermission;
                     SetPanelByStatus('panelFilePermissions', testResult.filePermission);
                 })
@@ -966,6 +999,7 @@ abstract class MbqBaseStatus
                         resultPush = SetTestResult(resultPush, -1);
                     }
 
+                    SetSpan('slugOrigin', 'green', result.slugOrigin);
                     SetSpan('slugMaxTimes', 'green', result.slugMaxTimes);
                     SetSpan('slugMaxTimesInPeriod', 'green', result.slugMaxTimesInPeriod);
                     SetSpan('slugResult', 'green', result.slugResult);
@@ -975,7 +1009,9 @@ abstract class MbqBaseStatus
                     SetSpan('slugStickTimestamp', 'green', result.slugStickTimestamp);
                     SetSpan('slugStickTime', 'green', result.slugStickTime);
                     SetSpan('slugSave', 'green', result.slugSave);
-
+                    SetSpan('pushTest', 'green', result.pushTest);
+                    SetSpan('pushError', 'green', result.pushError);
+                    SetSpan('pushRawHeaders', 'black', result.pushRawHeaders);
                     testResult.push = resultPush;
                     SetPanelByStatus('panelPush', testResult.push);
 

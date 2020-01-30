@@ -217,6 +217,23 @@
 	//   stack - array with genealogy of xml elements names:
 	//           used to validate nesting of xmlrpc elements
 	$GLOBALS['_xh']=null;
+
+    /**
+    * php7.2 abandon each
+    */
+    function func_new_each(&$array){
+        $res = array();
+        $key = key($array);
+        if($key !== null){
+            next($array);
+            $res[1] = $res['value'] = $array[$key];
+            $res[0] = $res['key'] = $key;
+        }else{
+            $res = false;
+        }
+        return $res;
+    }
+
 	/**
 	* Convert a string to the correct XML representation in a target charset
 	* To help correct communication of non-ascii chars inside strings, regardless
@@ -2225,7 +2242,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 				}
 				// be tolerant to line endings, and extra empty lines
 				$ar = preg_split("/\r?\n/", trim(substr($data, 0, $pos)));
-				while(list(,$line) = @each($ar))
+				while(list(,$line) = func_new_each($ar))
 				{
 					// take care of multi-line headers and cookies
 					$arr = explode(':',$line,2);
@@ -2751,7 +2768,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 				echo "$key => $val<br />";
 				if($key == 'array')
 				{
-					while(list($key2, $val2) = each($val))
+					while(list($key2, $val2) = func_new_each($val))
 					{
 						echo "-- $key2 => $val2<br />";
 					}
@@ -2895,7 +2912,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			//if (is_object($o) && (get_class($o) == 'xmlrpcval' || is_subclass_of($o, 'xmlrpcval')))
 			//{
 				reset($this->me);
-				list($typ, $val) = each($this->me);
+				list($typ, $val) = func_new_each($this->me);
 				return '<value>' . $this->serializedata($typ, $val, $charset_encoding) . "</value>\n";
 			//}
 		}
@@ -2907,7 +2924,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			//{
 				$ar=$o->me;
 				reset($ar);
-				list($typ, $val) = each($ar);
+				list($typ, $val) = func_new_each($ar);
 				return '<value>' . $this->serializedata($typ, $val) . "</value>\n";
 			//}
 		}
@@ -2948,7 +2965,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 		*/
 		function structeach()
 		{
-			return each($this->me['struct']);
+			return func_new_each($this->me['struct']);
 		}
 		// DEPRECATED! this code looks like it is very fragile and has not been fixed
 		// for a long long time. Shall we remove it for 2.0?
@@ -2964,7 +2981,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			if(is_array($b))
 			{
 				@reset($b);
-				while(list($id,$cont) = @each($b))
+				while(list($id,$cont) = func_new_each($b))
 				{
 					$b[$id] = $cont->scalarval();
 				}
@@ -2974,12 +2991,11 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 			{
 				$t = get_object_vars($b);
 				@reset($t);
-				while(list($id,$cont) = @each($t))
+				while(list($id,$cont) = func_new_each($t))
 				{
 					$t[$id] = $cont->scalarval();
 				}
-				@reset($t);
-				while(list($id,$cont) = @each($t))
+				while(list($id,$cont) = func_new_each($t))
 				{
 					@$b->$id = $cont;
 				}
@@ -2995,7 +3011,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 		function scalarval()
 		{
 			reset($this->me);
-			list(,$b)=each($this->me);
+			list(,$b)=func_new_each($this->me);
 			return $b;
 		}
 		/**
@@ -3133,7 +3149,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 				if (in_array('extension_api', $options))
 				{
 					reset($xmlrpc_val->me);
-					list($typ,$val) = each($xmlrpc_val->me);
+					list($typ,$val) = func_new_each($xmlrpc_val->me);
 					switch ($typ)
 					{
 						case 'dateTime.iso8601':
@@ -3307,7 +3323,7 @@ xmlrpc_encode_entitites($this->errstr, $GLOBALS['xmlrpc_internalencoding'], $cha
 				{
 					$arr = array();
 					reset($php_val);
-					while(list($k,$v) = each($php_val))
+					while(list($k,$v) = func_new_each($php_val))
 					{
 						$arr[$k] = php_xmlrpc_encode($v, $options, $k);
 					}

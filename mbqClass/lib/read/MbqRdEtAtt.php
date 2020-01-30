@@ -75,7 +75,7 @@ Class MbqRdEtAtt extends MbqBaseRdEtAtt {
             $oMbqEtAtt->url->setOriValue($file_url);
             $oMbqEtAtt->thumbnailUrl->setOriValue($thumbnail_url);
             $oMbqEtAtt->userId->setOriValue($attachment['poster_id']);
-            $downloadAllowed = $downloadAllowed && ($auth->acl_get('u_download') && (!isset($attachment['forum_id']) || $auth->acl_get('f_download', $attachment['forum_id'])));
+            $downloadAllowed = $auth->acl_get('u_download') && (!isset($attachment['forum_id']) || $auth->acl_get('f_download', $attachment['forum_id']));
             $oMbqEtAtt->canViewUrl->setOriValue($downloadAllowed);
             $oMbqEtAtt->canViewThumbnailUrl->setOriValue($downloadAllowed);
             $oMbqRdEtUser = MbqMain::$oClk->newObj('MbqRdEtUser');

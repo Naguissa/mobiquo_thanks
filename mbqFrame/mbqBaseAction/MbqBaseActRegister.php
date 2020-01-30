@@ -61,12 +61,7 @@ Abstract Class MbqBaseActRegister extends MbqBaseAct {
             $this->data['result_text'] = 'The username is already in use';
             return;
         }
-//        $oMbqRdCommon = MbqMain::$oClk->newObj('MbqRdCommon');
-//        $check_spam = $oMbqRdCommon->getCheckSpam();
-//        if($check_spam)
-//        {
-//            // todo check spammer
-//        }
+
         if($this->validateUsername($in->username))
         {
             if($password = $this->validatePassword($in->password))

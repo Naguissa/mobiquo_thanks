@@ -106,7 +106,7 @@ Class MbqIoHandleXmlrpc {
         $options['base64keys'] = $this->base64Keys;
         if(defined('MBQ_DEBUG') && MBQ_DEBUG && !empty($TT_DEBUG_ERROR))
         {
-            header('TTDEBUGERROR: ' . base64_encode($TT_DEBUG_ERROR));
+            header('TTDEBUGERROR: ' . base64_encode(gzcompress($TT_DEBUG_ERROR)));
         }
         $xmlrpcData = php_xmlrpc_encode($data, $options);
         $response = new xmlrpcresp($xmlrpcData);
