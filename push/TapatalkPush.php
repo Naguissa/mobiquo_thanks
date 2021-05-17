@@ -29,6 +29,13 @@ Class TapatalkPush extends TapatalkBasePush {
     	$request->enable_super_globals();
         $this->pushKey =  isset($config['tapatalk_push_key']) ? $config['tapatalk_push_key'] : "";
         $this->siteUrl = generate_board_url();
+
+        // We do not send push to banned users
+        if (!function_exists('phpbb_get_banned_user_ids'))
+        {
+            include($phpbb_root_path . 'includes/functions_user.' . $phpEx);
+        }
+
         parent::__construct($this);
     }
 
@@ -102,6 +109,10 @@ Class TapatalkPush extends TapatalkBasePush {
                 }
                 $db->sql_freeresult($result);
 
+                $banned_users = phpbb_get_banned_user_ids($ttrecipients);
+
+                $ttrecipients = array_diff($ttrecipients, $banned_users);
+
                 $ttp_data = array(
                     'id'        => $data['msg_id'],
                     'title'     => self::push_clean($data['message_subject']),
@@ -132,6 +143,10 @@ Class TapatalkPush extends TapatalkBasePush {
             }
 
             $db->sql_freeresult($result);
+
+            $banned_users = phpbb_get_banned_user_ids($subscribedUsers);
+
+            $subscribedUsers = array_diff($subscribedUsers, $banned_users);
 
             $ttp_data = array(
                 'id'             => $data['topic_id'],
@@ -164,6 +179,11 @@ Class TapatalkPush extends TapatalkBasePush {
             }
 
             $db->sql_freeresult($result);
+
+
+            $banned_users = phpbb_get_banned_user_ids($subscribedTopicUsers);
+
+            $subscribedTopicUsers = array_diff($subscribedTopicUsers, $banned_users);
 
             $ttp_data = array(
                 'id'             => $data['topic_id'],
@@ -230,6 +250,10 @@ Class TapatalkPush extends TapatalkBasePush {
                 $pushUsers[] = $row['userid'];
             }
             $db->sql_freeresult($result);
+
+            $banned_users = phpbb_get_banned_user_ids($pushUsers);
+
+            $pushUsers = array_diff($pushUsers, $banned_users);
 
             $ttp_data = array(
                 'id'             => $data['topic_id'],
@@ -298,6 +322,10 @@ Class TapatalkPush extends TapatalkBasePush {
                     $allowedQuotedUsers[] = $user_id;
                 }
             }
+
+            $banned_users = phpbb_get_banned_user_ids($allowedQuotedUsers);
+
+            $allowedQuotedUsers = array_diff($allowedQuotedUsers, $banned_users);
 
             if (empty($allowedQuotedUsers))
             {

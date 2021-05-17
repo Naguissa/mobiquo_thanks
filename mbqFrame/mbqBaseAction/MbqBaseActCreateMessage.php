@@ -30,7 +30,8 @@ Abstract Class MbqBaseActCreateMessage extends MbqBaseAct {
             $in->action = $this->getInputParam(3);
             $in->messageId = (int) $this->getInputParam(4);
         }
-
+        $in->body =str_replace(array('<','>'),array('&lt;','&gt;'),$in->body);
+        $in->subject =str_replace(array('<','>'),array('&lt;','&gt;'),$in->subject);
         return $in;
     }
 

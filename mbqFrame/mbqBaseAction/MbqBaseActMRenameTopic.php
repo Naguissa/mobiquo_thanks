@@ -24,6 +24,7 @@ Abstract Class MbqBaseActMRenameTopic extends MbqBaseAct {
             $in->topicId = $this->getInputParam(0);
             $in->title = $this->getInputParam(1);
         }
+        $in->title =str_replace(array('<','>'),array('&lt;','&gt;'),$in->title);
         return $in;
     }
     

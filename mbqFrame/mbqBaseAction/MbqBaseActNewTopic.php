@@ -34,6 +34,7 @@ Abstract Class MbqBaseActNewTopic extends MbqBaseAct {
             $in->groupId = $this->getInputParam(5);
             $in->poll = $this->getInputParam(6);
         }
+        $in->subject =str_replace(array('<','>'),array('&lt;','&gt;'),$in->subject);
         return $in;
     }
 

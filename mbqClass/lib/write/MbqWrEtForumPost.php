@@ -741,7 +741,7 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
             'message_md5'            => (string) $message_md5,
             'post_time'                => (isset($post_data['post_time'])) ? (int) $post_data['post_time'] : time(),
             'post_checksum'            => (isset($post_data['post_checksum'])) ? (string) $post_data['post_checksum'] : '',
-            'post_edit_reason'        => $post_data['post_edit_reason'],
+            'post_edit_reason'        => str_replace(array('<','>'),array('&lt;','&gt;'),$post_data['post_edit_reason']),
             'post_edit_user'        => ($postmode == 'edit') ? $user->data['user_id'] : ((isset($post_data['post_edit_user'])) ? (int) $post_data['post_edit_user'] : 0),
             'forum_parents'            => $post_data['forum_parents'],
             'forum_name'            => $post_data['forum_name'],

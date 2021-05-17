@@ -314,7 +314,7 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
 
         $posted_success = true;
         $topic_id = $data['topic_id'];
-        if($data['topic_approved'] == false)
+        if($approved == false)
         {
             $oMbqEtForumTopic->state->setOriValue(1);
         }

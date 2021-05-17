@@ -34,6 +34,7 @@ Abstract Class MbqBaseActSaveRawPost extends MbqBaseAct {
             $in->groupId = $this->getInputParam(5);
             $in->reason = $this->getInputParam(6);
         }
+        $in->reason =str_replace(array('<','>'),array('&lt;','&gt;'),$in->reason);
         return $in;
     }
     

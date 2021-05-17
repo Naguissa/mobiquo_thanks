@@ -32,6 +32,9 @@ MbqMain::init(); // frame init
 MbqMain::input(); // handle input data
 require_once(MBQ_PATH.'IncludeBeforeMbqAppEnv.php');
 MbqMain::initAppEnv(); // application environment init
+if(method_exists($request,'enable_super_globals')){
+    $request->enable_super_globals();
+}
 @ ob_start();
 TT_InitErrorLog();
 MbqMain::action(); // main program handle

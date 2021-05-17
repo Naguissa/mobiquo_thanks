@@ -1389,6 +1389,7 @@ function check_return_user_type($user_id, $is_xmlrpc = true)
     $result = $db->sql_query($sql);
     $user_row = $db->sql_fetchrow($result);
     $db->sql_freeresult($result);
+
     $sql = "SELECT group_name FROM " . USER_GROUP_TABLE . " AS ug LEFT JOIN " .GROUPS_TABLE. " AS g ON ug.group_id = g.group_id WHERE user_id = " . $user_id;
     $query = $db->sql_query($sql);
     $is_ban = $user->check_ban($user_id,false,false,true);
