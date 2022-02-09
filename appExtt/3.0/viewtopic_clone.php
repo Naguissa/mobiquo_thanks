@@ -1435,7 +1435,11 @@ if (file_exists($phpbb_root_path . 'includes/functions_thanks.' . $phpEx) && iss
         }
     }
 
-	if (function_exists('gfksx\ThanksForPosts\core\array_all_thanks'))
+	if (function_exists('naguissa\thanksforposts\core\array_all_thanks'))
+    {
+		gfksx\ThanksForPosts\core\array_all_thanks($post_list);
+        $support_post_thanks = true;
+    } elseif (function_exists('gfksx\ThanksForPosts\core\array_all_thanks'))
     {
 		gfksx\ThanksForPosts\core\array_all_thanks($post_list);
         $support_post_thanks = true;
@@ -1710,7 +1714,10 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	);
 
     // tapatalk add for thanks support
-	if (function_exists('gfksx\ThanksForPosts\core\output_thanks') && $support_post_thanks)
+	if (function_exists('naguissa\thanksforposts\core\output_thanks') && $support_post_thanks)
+    {
+		gfksx\ThanksForPosts\core\output_thanks($row['user_id']);
+	} elseif (function_exists('gfksx\ThanksForPosts\core\output_thanks') && $support_post_thanks)
     {
 		gfksx\ThanksForPosts\core\output_thanks($row['user_id']);
 	}

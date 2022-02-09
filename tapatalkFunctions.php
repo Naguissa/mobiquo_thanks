@@ -121,7 +121,7 @@ function get_short_content($post_id, $length = 200)
         MbqMain::$Cache->Set('MbqPostShortContent',$post_id,$row);
     }
     $message = preg_replace('/<URL url=\"(.*?)\">(.*?)<\/URL>/si', '[url="$1"]$2[/url]', $row['post_text']);
-    $message =  generate_text_for_edit($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
+    $message =  generate_text_for_edit($message, $row['bbcode_uid'], (int)$row['bbcode_bitfield']);
     $post_text = tapatalk_process_bbcode($message['text'], $row['bbcode_uid']);
     return process_short_content($post_text, 200);
 }
