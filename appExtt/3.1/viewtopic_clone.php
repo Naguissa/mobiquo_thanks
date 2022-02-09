@@ -82,25 +82,33 @@ if ($view && !$post_id)
 		}
 	}
 
-	if ($view == 'unread')
-	{
+		if (!$forum_id) {
+			return trigger_error('NO_TOPIC');
+		}
+	}
+
+	if ($view == 'unread') {
+		if (!empty($forum_id) && !empty($topic_id)) {
 		// Get topic tracking info
 		$topic_tracking_info = get_complete_topic_tracking($forum_id, $topic_id);
+		} else {
+			$topic_tracking_info = array();
+		}
+
 		$topic_last_read = (isset($topic_tracking_info[$topic_id])) ? $topic_tracking_info[$topic_id] : 0;
 
 		$sql = 'SELECT post_id, topic_id, forum_id
 			FROM ' . POSTS_TABLE . "
 			WHERE topic_id = $topic_id
-				AND " . $phpbb_content_visibility->get_visibility_sql('post', $forum_id) . "
+				" . (($auth->acl_get('m_approve', $forum_id)) ? '' : 'AND post_approved = 1') . "
 				AND post_time > $topic_last_read
 				AND forum_id = $forum_id
-			ORDER BY post_time ASC, post_id ASC";
+			ORDER BY post_time ASC";
 		$result = $db->sql_query_limit($sql, 1);
 		$row = $db->sql_fetchrow($result);
 		$db->sql_freeresult($result);
 
-		if (!$row)
-		{
+		if (!$row) {
 			$sql = 'SELECT topic_last_post_id as post_id, topic_id, forum_id
 				FROM ' . TOPICS_TABLE . '
 				WHERE topic_id = ' . $topic_id;
@@ -109,19 +117,16 @@ if ($view && !$post_id)
 			$db->sql_freeresult($result);
 		}
 
-		if (!$row)
-		{
+		if (!$row) {
 			// Setup user environment so we can process lang string
 			$user->setup('viewtopic');
 
-			trigger_error('NO_TOPIC');
+			return trigger_error('NO_TOPIC');
 		}
 
 		$post_id = $row['post_id'];
 		$topic_id = $row['topic_id'];
-	}
-	else if ($view == 'next' || $view == 'previous')
-	{
+	} else if ($view == 'next' || $view == 'previous') {
 		$sql_condition = ($view == 'next') ? '>' : '<';
 		$sql_ordering = ($view == 'next') ? 'ASC' : 'DESC';
 
