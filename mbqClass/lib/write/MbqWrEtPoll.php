@@ -21,6 +21,8 @@ Class MbqWrEtPoll extends MbqBaseWrEtPoll {
         $topic_id = $oMbqEtPoll->topicId->oriValue;
         $voted_id = $oMbqEtPoll->voteOptions->oriValue;
         $poll_max_options = $oMbqEtPoll->pollMaxOptions->oriValue;
+        $cur_voted_id = $oMbqEtPoll->myVotes->oriValue;
+
 
         if (!sizeof($voted_id) || sizeof($voted_id) > $poll_max_options || in_array(VOTE_CONVERTED, $cur_voted_id))
         {

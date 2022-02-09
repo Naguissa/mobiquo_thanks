@@ -220,7 +220,8 @@ Class MbqRdEtForum extends MbqBaseRdEtForum {
     public function getObjsMbqEtForum($var, $mbqOpt) {
         global $db, $auth, $user, $config, $mobiquo_config, $phpbb_home;
         if ($mbqOpt['case'] == 'byForumIds') {
-            $forumIds = implode($var,',');
+//            $forumIds = implode($var,',');
+            $forumIds = implode(',',$var);
             $forum_filter = " WHERE f.forum_id IN ($forumIds)";
             $sql = 'SELECT f.*  FROM ' . FORUMS_TABLE . ' f ' . $forum_filter . '
             ORDER BY f.left_id ASC';

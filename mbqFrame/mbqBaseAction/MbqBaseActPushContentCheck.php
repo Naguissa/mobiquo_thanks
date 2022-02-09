@@ -6,15 +6,15 @@ defined('MBQ_IN_IT') or exit;
  * forget password
  */
 Abstract Class MbqBaseActPushContentCheck extends MbqBaseAct {
-    
+
     public function __construct() {
         parent::__construct();
     }
-    
+
     function getInput()
     {
         $in = new stdClass();
-        
+        return $in;
         if(MbqMain::isRawPostProtocol())
         {
             $in->code = MbqMain::$input['code'];
@@ -29,7 +29,7 @@ Abstract Class MbqBaseActPushContentCheck extends MbqBaseAct {
         $in->data = unserialize(MbqMain::$input['data']);
         return $in;
     }
-    
+
     /**
      * action implement
      */
@@ -51,7 +51,7 @@ Abstract Class MbqBaseActPushContentCheck extends MbqBaseAct {
                         }
                     }
                     break;
-                } 
+                }
             case 'conv':
                 {
                     $oMbqRdEtPcMsg = MbqMain::$oClk->newObj('MbqRdEtPcMsg');
@@ -76,9 +76,9 @@ Abstract Class MbqBaseActPushContentCheck extends MbqBaseAct {
                     }
                     break;
                 }
-            
+
         }
         $this->data['result'] = $result;
     }
-  
+
 }

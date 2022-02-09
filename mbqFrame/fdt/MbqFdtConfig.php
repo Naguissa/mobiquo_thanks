@@ -109,7 +109,7 @@ Abstract Class MbqFdtConfig extends MbqBaseFdt {
                 )
             ),
             'push_content_check' => array(
-                'default' => 1,
+                'default' => 0,
                 'range' => array (
                     'support' => 1,
                     'notSupport' => 0

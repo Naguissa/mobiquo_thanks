@@ -63,7 +63,9 @@ Abstract Class MbqBaseActSaveRawPost extends MbqBaseAct {
                     $state = $oMbqEtForumPost->state->oriValue;
                     //reload post
                     $oMbqRdEtForumPost = MbqMain::$oClk->newObj('MbqRdEtForumPost');
-                    if ($oMbqEtForumPostResult = $oMbqRdEtForumPost->initOMbqEtForumPost($oMbqEtForumPost->postId->oriValue, array('case' => 'byPostId'))) {
+                    //$oMbqEtForumPost->postId->oriValue
+
+                    if ($oMbqEtForumPostResult = $oMbqRdEtForumPost->initOMbqEtForumPost($in->postId, array('case' => 'byPostId'))) {
                         $this->data['result'] = true;
                         $data1 = $oMbqRdEtForumPost->returnApiDataForumPost($oMbqEtForumPostResult, $in->returnHtml);
                         MbqMain::$oMbqCm->mergeApiData($this->data, $data1);

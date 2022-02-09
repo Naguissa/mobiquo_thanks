@@ -43,7 +43,7 @@ Class MbqAclEtPoll extends MbqBaseAclEtPoll {
             (($topic_data['poll_length'] != 0 && $topic_data['poll_start'] + $topic_data['poll_length'] > time()) || $topic_data['poll_length'] == 0) &&
             $topic_data['topic_status'] != ITEM_LOCKED &&
             $topic_data['forum_status'] != ITEM_LOCKED &&
-            (!sizeof($cur_voted_id) ||
+            (empty($cur_voted_id) ||
             ($auth->acl_get('f_votechg', $forum_id) && $topic_data['poll_vote_change']))) ? true : false;
 
         return $s_can_vote;

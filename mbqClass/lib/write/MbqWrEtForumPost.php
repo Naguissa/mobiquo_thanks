@@ -1072,33 +1072,4 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
         return true;
     }
 
-	/**
-	 * thank post
-	 */
-	public function thankPost($oMbqEtForumPost, $oMbqEtThank) {
-		global $db, $phpbb_root_path, $phpEx, $user, $phpbb_container, $request, $phpbb_dispatcher, $auth, $support_post_thanks, $template, $table_prefix, $thanksHelper, $config;
-
-
-		// Redo the trick only if needed
-		if (!isset($support_post_thanks) || !$support_post_thanks || !isset($thanksHelper) || !$thanksHelper) {
-			if (file_exists($phpbb_root_path . 'ext/gfksx/ThanksForPosts/core/helper.' . $phpEx) && isset($config['remove_thanks'])) {
-				if (!class_exists('gfksx\ThanksForPosts\core\helper')) {
-					include_once($phpbb_root_path . 'ext/gfksx/ThanksForPosts/core/helper.' . $phpEx);
-				}
-				if (class_exists('gfksx\ThanksForPosts\core\helper')) {
-					$thanksHelper = new gfksx\ThanksForPosts\core\helper($config, $db, $auth, $template, $user, $phpbb_container->get('cache')->get_driver(), $request, $phpbb_container->get('notification_manager'), $phpbb_container->get('controller.helper'), $phpbb_dispatcher, $phpbb_root_path, $phpEx, $table_prefix, $table_prefix . 'thanks', USERS_TABLE, POSTS_TABLE, NOTIFICATIONS_TABLE);
-					$support_post_thanks = true;
-				}
-			}
-		}
-		if ($support_post_thanks) {
-			$userId = $oMbqEtThank->userId->oriValue;
-			$postId = $oMbqEtThank->key->oriValue;
-			$forumId = $oMbqEtForumPost->forumId->oriValue;
-			$request->overwrite('to_id', $oMbqEtForumPost->oAuthorMbqEtUser->userId->oriValue);
-			$request->overwrite('from_id', $userId);
-			$thanksHelper->insert_thanks($postId, $userId, $forumId);
-		}
-	}
-
 }

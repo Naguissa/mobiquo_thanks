@@ -79,7 +79,7 @@ Abstract Class MbqBaseRdEtPoll extends MbqBaseRd {
      *
      * @return  Mixed
      */
-    public function initOMbqEtPoll() {
+    public function initOMbqEtPoll($var, $mbqOpt) {
         MbqError::alert('', __METHOD__ . ',line:' . __LINE__ . '.' . MBQ_ERR_INFO_NEED_ACHIEVE_IN_INHERITED_CLASSE);
     }
   
