@@ -19,8 +19,7 @@ function mbqInitGetConfigValues($isTTServerCall = false)
     {
         MbqMain::$customConfig['base']['is_open'] = MbqBaseFdt::getFdt('MbqFdtConfig.base.is_open.range.yes');
     }
-    MbqMain::$customConfig['base']['version'] = 'pb31_2.1.8';
- 
+    MbqMain::$customConfig['base']['version'] = 'pb31_2.2.1';
     MbqMain::$customConfig['base']['api_level'] = 4;
     MbqMain::$customConfig['base']['json_support'] = MbqBaseFdt::getFdt('MbqFdtConfig.base.json_support.range.yes');
     MbqMain::$customConfig['base']['inbox_stat'] = MbqBaseFdt::getFdt('MbqFdtConfig.base.inbox_stat.range.support');
@@ -33,7 +32,7 @@ function mbqInitGetConfigValues($isTTServerCall = false)
     MbqMain::$customConfig['base']['set_api_key'] = 1;
     MbqMain::$customConfig['base']['set_forum_info'] = 1;
     MbqMain::$customConfig['base']['user_subscription'] = 1;
-    MbqMain::$customConfig['base']['push_content_check'] = 1;
+    MbqMain::$customConfig['base']['push_content_check'] = 0;
 
     MbqMain::$customConfig['base']['ads_disabled_group']  = isset($config['tapatalk_ad_filter']) ? $config['tapatalk_ad_filter'] : "";
 

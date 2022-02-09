@@ -1193,7 +1193,7 @@ if ($keywords || $author || $author_id || $search_id || $submit)
                 $message = $row['post_text'];
  //               $message = preg_replace('/<URL url=\"(.*?)\"><s>\[URL[^\]]*]<\/s>(.*?)<e>\[\/URL\]<\/e><\/URL>/si', '[url="$1"]$2[/url]', $message);
  //               $message = preg_replace('/<URL url=\"(.*?)\">(.*?)<\/URL>/si', '[url="$1"]$2[/url]', $message);
-                $rawmessage =  generate_text_for_edit($message, $row['bbcode_uid'], $row['bbcode_bitfield']);
+                $rawmessage =  generate_text_for_edit($message, $row['bbcode_uid'], (int)$row['bbcode_bitfield']);
                 $rawmessage = $rawmessage['text'];
                 $message = generate_text_for_display($row['post_text'], $row['bbcode_uid'], $row['bbcode_bitfield'], $parse_flags, true);
 
