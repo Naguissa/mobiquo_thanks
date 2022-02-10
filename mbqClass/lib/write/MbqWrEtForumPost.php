@@ -1086,7 +1086,7 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
 					include_once($phpbb_root_path . 'ext/naguissa/thanksforposts/core/helper.' . $phpEx);
 				}
 				if (class_exists('naguissa\thanksforposts\core\helper')) {
-					$thanksHelper = new naguissa\thanksforposts\core\helper($config, $db, $auth, $template, $user, $phpbb_container->get('cache')->get_driver(), $request, $phpbb_container->get('notification_manager'), $phpbb_container->get('controller.helper'), $phpbb_dispatcher, $phpbb_root_path, $phpEx, $table_prefix, $table_prefix . 'thanks', USERS_TABLE, POSTS_TABLE, NOTIFICATIONS_TABLE);
+					$thanksHelper = new naguissa\thanksforposts\core\helper($config, $db, $auth, $template, $user, $phpbb_container->get('cache')->get_driver(), $request, $phpbb_container->get('notification_manager'), $phpbb_container->get('controller.helper'), $phpbb_dispatcher, $phpbb_root_path, $phpEx, $table_prefix, $table_prefix . 'thanks', USERS_TABLE, POSTS_TABLE, NOTIFICATIONS_TABLE, TOPICS_TABLE);
 					$support_post_thanks = true;
 				}
 			}

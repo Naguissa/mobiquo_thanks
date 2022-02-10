@@ -548,8 +548,7 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
             //$oMbqEtForumPost->allowSmilies->setOriValue($row['bind']['enable_smilies'] ? true : false);
             //$oMbqEtForumPost->position->setOriValue($row['prev_posts'] + 1);
             $oMbqEtForumPost->canThank->setOriValue(isset($row['bind']['can_thank']) && $row['bind']['can_thank']);
-   			$oMbqEtForumPost->canUnthank->setOriValue(isset($row['bind']['can_unthank']) && $row['bind']['can_unthank']);
-			$oMbqEtForumPost->thankCount->setOriValue($row['bind']['post_author_id']);
+			$oMbqEtForumPost->canUnthank->setOriValue(isset($row['bind']['can_unthank']) && $row['bind']['can_unthank']);
 
             //$oMbqEtForumPost->thankCount->setOriValue($row['bind']['post_author_id']);
             $oMbqEtForumPost->isThanked->setOriValue(isset($row['bind']['thanks_info']));
