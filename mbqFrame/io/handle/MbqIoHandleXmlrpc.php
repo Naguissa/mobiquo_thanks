@@ -74,7 +74,7 @@ Class MbqIoHandleXmlrpc {
                     $category = LC_ALL;
                     $locale   = $localeSetting;
                 }
-                setlocale($category, $locale);
+                setlocale(intval($category), $locale);
             }
 
         }
