@@ -119,6 +119,10 @@ abstract class MbqBaseStatus
     {
 
     }
+    public function IsJsonEnabled()
+    {
+        return function_exists("json_encode") && function_exists("json_decode");
+    }
     protected function GetPluginVersion()
     {
         return MbqMain::$customConfig['base']['version'];;
@@ -136,6 +140,7 @@ abstract class MbqBaseStatus
         $installedVersion = $this->GetPluginVersion();
         $installedHookVersion = $this->GetPluginHookVersion();
         $installedForumVersion = $this->GetForumVersion();
+        $jsonEnabled = $this->IsJsonEnabled();
         $version = explode('_', $installedVersion);
         $pluginName = $version[0];
         $pluginVersion = $version[1];
@@ -149,11 +154,11 @@ abstract class MbqBaseStatus
             $lastPluginInfo = $versions->stable->$pluginName;
             $downloadUrl = 'https://www.tapatalk.com' . $lastPluginInfo->download_url;
             $lastVersion = $pluginName . '_' . $lastPluginInfo->version_string;
-            return array('pluginName' =>  $pluginName, 'installedVersion' => $installedVersion, 'installedHookVersion' => $installedHookVersion, 'installedForumVersion' => $installedForumVersion, 'lastVersion' => $lastVersion, 'downloadUrl' => $downloadUrl);
+            return array('pluginName' =>  $pluginName, 'installedVersion' => $installedVersion, 'installedHookVersion' => $installedHookVersion, 'installedForumVersion' => $installedForumVersion, 'lastVersion' => $lastVersion, 'downloadUrl' => $downloadUrl, 'jsonEnabled' => $jsonEnabled );
         }
         else
         {
-            return array('pluginName' =>  $pluginName, 'installedVersion' => $installedVersion, 'installedHookVersion' => $installedHookVersion, 'installedForumVersion' => $installedForumVersion, 'lastVersionError' => 'Cannot connect to Tapatalk server to get last version info');
+            return array('pluginName' =>  $pluginName, 'installedVersion' => $installedVersion, 'installedHookVersion' => $installedHookVersion, 'installedForumVersion' => $installedForumVersion, 'lastVersionError' => 'Cannot connect to Tapatalk server to get last version info', 'jsonEnabled' => $jsonEnabled);
         }
     }
     public function TestConnectivity()
@@ -300,7 +305,7 @@ abstract class MbqBaseStatus
         $tapatalkPush  = new TapatalkPush();
         $result['pushTest'] = $tapatalkPush->testPush();
         $result['pushRawHeaders'] = '<pre>' . $tapatalkPush->connection->raw_headers . '</pre>';
-        $result['pushError'] = implode('<br>',$tapatalkPush->connection->error);
+        $result['pushError'] = !empty($tapatalkPush->connection->error) ? implode('<br>',$tapatalkPush->connection->error) : '';
         return $result;
     }
     public function ResetBYOInfo()
@@ -316,11 +321,13 @@ abstract class MbqBaseStatus
         $byoInfo = $this->GetBYOInfo();
         $result['byoForumId'] = isset($byoInfo['forum_id']) ? $byoInfo['forum_id'] : 'N/A';
         $result['byoBannerEnabled'] = isset($byoInfo['banner_enable']) ? $byoInfo['banner_enable'] : 'N/A';
+        $result['byoBannerVersion'] = isset($byoInfo['banner_version']) ? $byoInfo['banner_version'] : 'N/A';
         $result['byoUpdate'] = isset($byoInfo['update']) ? $byoInfo['update'] : 'N/A';
         $result['byoFacebookEnabled'] = isset($byoInfo['facebook_enable']) ? $byoInfo['facebook_enable'] : 'N/A';
         $result['byoTwitterEnabled'] = isset($byoInfo['twitter_enable']) ? $byoInfo['twitter_enable'] : 'N/A';
         $result['byoGoogleEnabled'] = isset($byoInfo['google_enable']) ? $byoInfo['google_enable'] : 'N/A';
         $result['byoTwitterAccount'] = isset($byoInfo['twitter_account']) ? $byoInfo['twitter_account'] : 'N/A';
+        $result['byoPiwikId'] = isset($byoInfo['piwik_id']) ? $byoInfo['piwik_id'] : 'N/A';
         $result['byoAppName']= isset($byoInfo['byo_info']['app_name']) ? $byoInfo['byo_info']['app_name'] : 'N/A';
         $result['byoAppRebrandingId'] = isset($byoInfo['byo_info']['app_rebranding_id']) ? $byoInfo['byo_info']['app_rebranding_id'] : 'N/A';
         $result['byoAppIconUrl'] = isset($byoInfo['byo_info']['app_icon_url']) ? $byoInfo['byo_info']['app_icon_url'] : 'N/A';
@@ -467,8 +474,11 @@ abstract class MbqBaseStatus
                             Current forum version:
                             <span id="installedForumVersion">Loading...</span>
                             <br />
+                            Is JSON enabled:
+                            <span id="jsonEnabled">Loading...</span>
+                            <br />
                             <span id="versionStatus"></span>
-
+                            <br />
                         </div>
                     </div>
                     <div class="panel panel-default" id="panelBYO">
@@ -481,11 +491,17 @@ abstract class MbqBaseStatus
                             ForumId:
                             <span id="byoForumId">Loading...</span>
                             <br />
+                            Piwik Id:
+                            <span id="byoPiwikId">Loading...</span>
+                            <br />
                             Current data update date:
                             <span id="byoUpdate">Loading...</span>
                             <br />
                             Banner enabled:
                             <span id="byoBannerEnabled">Loading...</span>
+                            <br />
+                            Banner Version:
+                            <span id="byoBannerVersion">Loading...</span>
                             <br />
                             Google meta enabled:
                             <span id="byoGoogleEnabled">Loading...</span>
@@ -753,6 +769,7 @@ abstract class MbqBaseStatus
                 SetSpan('installedVersion', 'black', 'Loading...');
                 SetSpan('installedHookVersion', 'black', 'Loading...');
                 SetSpan('installedForumVersion', 'black', 'Loading...');
+                SetSpan('jsonEnabled', 'black', 'Loading...');
                 SetSpan('versionStatus', 'black', '');
                 SetPanel('panelVersion', 'panel-default');
 
@@ -785,6 +802,12 @@ abstract class MbqBaseStatus
                     SetPanelByStatus('panelVersion', testResult.pluginVersion);
                     SetSpan('installedHookVersion', 'green', result.installedHookVersion);
                     SetSpan('installedForumVersion', 'green', result.installedForumVersion);
+                    if (result.jsonEnabled) {
+                        SetSpan('jsonEnabled', 'green', 'Yes');
+                    }
+                    else {
+                        SetSpan('jsonEnabled', 'red', 'No, you should enable JSON in your php.ini for better plugin performance');
+                    }
 
                 })
                 .fail(function (error) {
@@ -1034,6 +1057,8 @@ abstract class MbqBaseStatus
                 testResult.byoinfo = null;
                 ProcessSummary();
                 SetSpan('byoForumId', 'black', 'Loading...');
+                SetSpan('byoPiwikId', 'black', 'Loading...');
+                SetSpan('byoBannerVersion', 'black', 'Loading...');
                 SetSpan('byoUpdate', 'black', 'Loading...');
                 SetSpan('byoBannerEnabled', 'black', 'Loading...');
                 SetSpan('byoGoogleEnabled', 'black', 'Loading...');
@@ -1063,6 +1088,8 @@ abstract class MbqBaseStatus
                     resultBYOInfo = 1;
 
                     SetSpan('byoForumId', 'black', result.byoForumId);
+                    SetSpan('byoPiwikId', 'black', result.byoPiwikId);
+                    SetSpan('byoBannerVersion', 'black', result.byoBannerVersion);
                     SetSpan('byoUpdate', 'black', result.byoUpdate);
                     SetSpan('byoBannerEnabled', 'black', result.byoBannerEnabled);
                     SetSpan('byoGoogleEnabled', 'black', result.byoGoogleEnabled);

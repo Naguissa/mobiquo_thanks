@@ -31,6 +31,8 @@ define('MBQ_RUNNING_NAMEPRE', 'mbqnamepre_'.mt_rand(2000000000, 2100000000).'_')
 define('MBQ_ERR_DATA_NOT_FOUND',0);
 define('MBQ_ERR_LOGIN_REQUIRED',1);
 define('MBQ_ERR_NOT_PERMISSION',2); /* current user not permission do something*/
+define('MBQ_ERR_PASSWORD_EXPIRED',3);
+define('MBQ_ERR_REDIRECT_WEB_BROWSER',4); /* request need go to web browser, result_url */
 define('MBQ_ERR_UNKNOWN_REASON',-1);
 /* path constant */
 require_once(MBQ_FRAME_PATH.'MbqError.php');
@@ -524,7 +526,7 @@ Abstract Class MbqBaseConfig {
         $this->cfg['base']['push'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.base.push.default')));
         $this->cfg['base']['push_type'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.base.push_type.default')));
         $this->cfg['base']['api'] = MbqMain::$oClk->newObj('MbqValue', array('cfgValueType' => MbqBaseFdt::getFdt('MbqFdtConfig.otherDefine.cfgValueType.range.adv'), 'oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.base.api.default'))); /* Supported API Signature. */
-        $this->cfg['base']['json_support'] = MbqMain::$oClk->newObj('MbqValue', array('cfgValueType' => MbqBaseFdt::getFdt('MbqFdtConfig.base.json_support.default'))); /* API supports json. */
+        $this->cfg['base']['json_support'] = MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.base.json_support.default'))); /* API supports json. */
         $this->cfg['base']['result_text'] = MbqMain::$oClk->newObj('MbqValue', array('cfgValueType' => MbqBaseFdt::getFdt('MbqFdtConfig.otherDefine.cfgValueType.range.adv'), 'oriValue' => ''));
         $this->cfg['base']['api_key'] = clone MbqMain::$simpleV;
         $this->cfg['base']['set_api_key'] =  MbqMain::$oClk->newObj('MbqValue', array('oriValue' => MbqBaseFdt::getFdt('MbqFdtConfig.base.set_api_key.default')));

@@ -19,7 +19,7 @@ function mbqInitGetConfigValues($isTTServerCall = false)
     {
         MbqMain::$customConfig['base']['is_open'] = MbqBaseFdt::getFdt('MbqFdtConfig.base.is_open.range.yes');
     }
-    MbqMain::$customConfig['base']['version'] = 'pb31_2.2.2';
+    MbqMain::$customConfig['base']['version'] = 'pb31_2.3.0';
     MbqMain::$customConfig['base']['api_level'] = 4;
     MbqMain::$customConfig['base']['json_support'] = MbqBaseFdt::getFdt('MbqFdtConfig.base.json_support.range.yes');
     MbqMain::$customConfig['base']['inbox_stat'] = MbqBaseFdt::getFdt('MbqFdtConfig.base.inbox_stat.range.support');

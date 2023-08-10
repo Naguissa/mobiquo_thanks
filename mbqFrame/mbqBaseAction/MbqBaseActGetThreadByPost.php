@@ -44,7 +44,12 @@ Abstract Class MbqBaseActGetThreadByPost extends MbqBaseAct {
             MbqError::alert('', "Need valid post id!", '', MBQ_ERR_APP);
         }
          $oMbqRdEtForumTopic = MbqMain::$oClk->newObj('MbqRdEtForumTopic');
-        if ($oMbqEtForumTopic = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topicId, array('case' => 'byTopicId'))) {
+        if (!empty($oMbqRdEtForumTopic::$initOMbqEtForumPost)) {
+            $oMbqEtForumTopic = $oMbqRdEtForumTopic::$initOMbqEtForumPost;
+        } else {
+            $oMbqEtForumTopic = $oMbqRdEtForumTopic->initOMbqEtForumTopic($topicId, array('case' => 'byTopicId'));
+        }
+        if ($oMbqEtForumTopic) {
             $oMbqAclEtForumTopic = MbqMain::$oClk->newObj('MbqAclEtForumTopic');
             $aclResult = $oMbqAclEtForumTopic->canAclGetThread($oMbqEtForumTopic);
             if ($aclResult === true) {    //acl judge

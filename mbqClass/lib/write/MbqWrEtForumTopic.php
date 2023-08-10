@@ -122,6 +122,7 @@ Class MbqWrEtForumTopic extends MbqBaseWrEtForumTopic {
         $post_data['poll_option_text'] = utf8_normalize_nfc(request_var('poll_option_text', '', true));
         $post_data['poll_max_options'] = request_var('poll_max_options', 1);
         $post_data['poll_vote_change'] = ($auth->acl_get('f_votechg', $forum_id) && isset($_POST['poll_vote_change'])) ? 1 : 0;
+        $post_data['poll_last_vote'] = (isset($post_data['poll_last_vote'])) ? $post_data['poll_last_vote'] : 0;
 
         // Parse Attachments - before checksum is calculated
         $message_parser->parse_attachments('fileupload', 'post', $forum_id, true, false, false);

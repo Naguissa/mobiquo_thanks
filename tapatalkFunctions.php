@@ -46,10 +46,14 @@ function getSystemString($key)
 }
 function basic_clean($str)
 {
-    $str = preg_replace('/<br\s*\/?>/si', "\n", $str);
-    $str = strip_tags($str);
-    $str = trim($str);
-    return html_entity_decode($str, ENT_QUOTES, 'UTF-8');
+    if(!empty($str))
+    {
+        $str = preg_replace('/<br\s*\/?>/si', "\n", $str);
+        $str = strip_tags($str);
+        $str = trim($str);
+        return html_entity_decode($str, ENT_QUOTES, 'UTF-8');
+    }
+    return $str;
 }
 
 
@@ -1380,7 +1384,6 @@ function check_return_user_type($user_id, $is_xmlrpc = true)
     global $db, $user, $config;
     //$session = new user();
     $user_id = intval($user_id);
-
 //    $user_row = TT_get_user_by_id($user_id);
 
     $sql = 'SELECT *
@@ -1389,7 +1392,6 @@ function check_return_user_type($user_id, $is_xmlrpc = true)
     $result = $db->sql_query($sql);
     $user_row = $db->sql_fetchrow($result);
     $db->sql_freeresult($result);
-
     $sql = "SELECT group_name FROM " . USER_GROUP_TABLE . " AS ug LEFT JOIN " .GROUPS_TABLE. " AS g ON ug.group_id = g.group_id WHERE user_id = " . $user_id;
     $query = $db->sql_query($sql);
     $is_ban = $user->check_ban($user_id,false,false,true);

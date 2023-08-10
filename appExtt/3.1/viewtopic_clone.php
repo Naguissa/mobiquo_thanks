@@ -1523,8 +1523,6 @@ $support_post_thanks = true;
 }
 }
 
-
-
 /**
 * Event to modify the post, poster and attachment data before assigning the posts
 *
@@ -1847,15 +1845,12 @@ for ($i = 0, $end = sizeof($post_list); $i < $end; ++$i)
 	{
 		$u_pm = append_sid("{$phpbb_root_path}ucp.$phpEx", 'i=pm&amp;mode=compose&amp;action=quotepost&amp;p=' . $row['post_id']);
 	}
-
 // tapatalk add for thanks support
 if (function_exists('naguissa\thanksforposts\core\output_thanks') && $support_post_thanks) {
 naguissa\ThanksForPosts\core\output_thanks($row['user_id']);
 } elseif (function_exists('gfksx\ThanksForPosts\core\output_thanks') && $support_post_thanks) {
 gfksx\ThanksForPosts\core\output_thanks($row['user_id']);
 }
-
-
 
 	//
 	$post_row = array(

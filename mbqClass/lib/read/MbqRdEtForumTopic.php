@@ -753,16 +753,19 @@ Class MbqRdEtForumTopic extends MbqBaseRdEtForumTopic {
 	        {
                 $oMbqEtForumTopic->isDeleted->setOriValue($row['topic_status'] == 1);
 	            $oMbqEtForumTopic->isApproved->setOriValue($row['topic_approved'] ? true : false);
-	        }
+            }
 	        else
 	        {
                 $oMbqEtForumTopic->isDeleted->setOriValue($row['topic_visibility'] == ITEM_DELETED);
                 $oMbqEtForumTopic->isApproved->setOriValue($row['topic_visibility'] != ITEM_UNAPPROVED);
             }
+            if(!$oMbqEtForumTopic->isApproved->oriValue)
+            {
+                $oMbqEtForumTopic->canApprove->setOriValue($auth->acl_get('m_approve', $forum_id));
+            }     
             $oMbqEtForumTopic->canDelete->setOriValue($auth->acl_get('m_delete', $forum_id));
             $oMbqEtForumTopic->isClosed->setOriValue($row['topic_status'] == ITEM_LOCKED);
             $oMbqEtForumTopic->canClose->setOriValue($auth->acl_get('m_lock', $forum_id) || ($auth->acl_get('f_user_lock', $forum_id) && $user->data['is_registered'] && $user->data['user_id'] == $row['topic_poster']));
-            $oMbqEtForumTopic->canApprove->setOriValue($auth->acl_get('m_approve', $forum_id));
             $oMbqEtForumTopic->canMove->setOriValue($auth->acl_get('m_move', $forum_id));
             $oMbqEtForumTopic->isSubscribed->setOriValue(isset($mbqOpt['user_watch_row'][$topic_id]));
             $oMbqEtForumTopic->canSubscribe->setOriValue(($config['email_enable'] || $config['jab_enable']) && $config['allow_topic_notify'] && $user->data['is_registered']);

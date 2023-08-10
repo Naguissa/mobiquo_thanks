@@ -82,6 +82,9 @@ Abstract Class MbqBaseRdEtForum extends MbqBaseRd {
             }
             $data['prefixes'] = (array) $tempArr;
         }
+        if ($oMbqEtForum->customFieldsList->hasSetOriValue()) {
+            $data['custom_fields_list'] = (array) MbqMain::$oMbqCm->changeArrValueToString($oMbqEtForum->customFieldsList->oriValue);
+        }
         if ($oMbqEtForum->canUpload->hasSetOriValue()) {
             $data['can_upload'] = (boolean) $oMbqEtForum->canUpload->oriValue;
         } else {
@@ -160,6 +163,9 @@ Abstract Class MbqBaseRdEtForum extends MbqBaseRd {
                 $tempArr[] = array('prefix_id' => (string) $prefix['id'], 'prefix_display_name' => (string) $prefix['name']);
             }
             $data['prefixes'] = (array) $tempArr;
+        }
+        if ($oMbqEtForum->customFieldsList->hasSetOriValue()) {
+            $data['custom_fields_list'] = (array) MbqMain::$oMbqCm->changeArrValueToString($oMbqEtForum->customFieldsList->oriValue);
         }
         if ($oMbqEtForum->canUpload->hasSetOriValue()) {
             $data['can_upload'] = (boolean) $oMbqEtForum->canUpload->oriValue;

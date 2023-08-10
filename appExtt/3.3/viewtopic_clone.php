@@ -12,8 +12,8 @@
  * the docs/CREDITS.txt file.
  *
  */
-global $db, $phpbb_root_path, $phpEx, $user, $phpbb_container, $request, $phpbb_dispatcher, $pagination, $auth, $attachment_by_id, $support_post_thanks, $topic_data, $total_posts, $can_subscribe, $post_data, $config, $template, $table_prefix, $thanksHelper;
 
+global $db,$phpbb_root_path,$phpEx,$user,$phpbb_container,$request,$phpbb_dispatcher,$pagination, $auth, $attachment_by_id,  $support_post_thanks, $topic_data, $total_posts, $can_subscribe, $post_data, $config, $template, $table_prefix, $thanksHelper;
 defined('IN_MOBIQUO') or exit;
 
 //include($phpbb_root_path . 'common.' . $phpEx);
@@ -1463,8 +1463,6 @@ if ($bbcode_bitfield !== '')
 	$bbcode = new bbcode(base64_encode($bbcode_bitfield));
 }
 
-
-
 // tapatalk add for thanks support
 $support_post_thanks = false;
 $thanksHelper = NULL;
@@ -1512,7 +1510,6 @@ elseif (file_exists($phpbb_root_path . 'ext/gfksx/ThanksForPosts/core/helper.' .
 		$support_post_thanks = true;
 		}
 	}
-
 // Get the list of users who can receive private messages
 $can_receive_pm_list = $auth->acl_get_list(array_keys($user_cache), 'u_readpm');
 $can_receive_pm_list = (empty($can_receive_pm_list) || !isset($can_receive_pm_list[0]['u_readpm'])) ? array() : $can_receive_pm_list[0]['u_readpm'];

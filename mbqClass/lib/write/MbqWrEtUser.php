@@ -189,6 +189,7 @@ Class MbqWrEtUser extends MbqBaseWrEtUser {
              * @var	array	user_row	Array with current ucp registration data
              * @since 3.1.4-RC1
              */
+            $submit = true;
             $vars = array('submit', 'cp_data', 'user_row');
             extract($phpbb_dispatcher->trigger_event('core.ucp_register_user_row_after', compact($vars)));
 

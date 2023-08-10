@@ -59,8 +59,11 @@ function mobiquo_error_handler($errno, $msg_text, $errfile, $errline)
         echo $response;
         exit;
     }
-
-    if(strstr(strip_tags($msg_text),$user->lang['REPORTS_CLOSED_SUCCESS']) || strstr(strip_tags($msg_text),$user->lang['REPORT_CLOSED_SUCCESS']))
+    if(preg_match('/vendor/', $errfile))
+    {
+        return;
+    }
+    if(!empty($user) && in_array('REPORTS_CLOSED_SUCCESS',$user->lang) && (strstr(strip_tags($msg_text),$user->lang['REPORTS_CLOSED_SUCCESS']) || strstr(strip_tags($msg_text),$user->lang['REPORT_CLOSED_SUCCESS'])))
     {
         MbqError::alert('', basic_clean($user->lang['REPORTS_CLOSED_SUCCESS']));
 
@@ -155,7 +158,7 @@ function mobiquo_error_handler($errno, $msg_text, $errfile, $errline)
          if(!check_error_status($msg_text))
          {
              if (MBQ_DEBUG == -1) $msg_text .= " > $errfile, $errline";
-             
+
              MbqError::alert('', $msg_text);
              exit;
          }

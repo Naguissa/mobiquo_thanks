@@ -776,7 +776,7 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
         $post_id = '';
         if ($redirect_url)
         {
-            preg_match('/&amp;p=(\d+)/', $redirect_url, $matches);
+            preg_match('/p=(\d+)/', $redirect_url, $matches);
             $post_id = $matches[1];
             $reply_success = true;
             $oMbqEtForumPost->postId->setOriValue($post_id);
@@ -1071,7 +1071,6 @@ Class MbqWrEtForumPost extends MbqBaseWrEtForumPost {
 
         return true;
     }
-
 	/**
 	 * thank post
 	 */

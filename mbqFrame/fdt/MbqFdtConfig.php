@@ -58,10 +58,10 @@ Abstract Class MbqFdtConfig extends MbqBaseFdt {
                 'default' => '',
             ),
             'json_support' => array(
-               'default' => false,         /* default value */
+               'default' => 0,         /* default value */
                 'range' => array (      /* value range */
-                    'yes' => true,
-                    'no' => false
+                    'yes' => 1,
+                    'no' => 0
                 )
             ),
             'version' => array(

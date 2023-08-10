@@ -496,7 +496,7 @@ Class MbqRdEtUser extends MbqBaseRdEtUser {
             if (isset($var['is_online'])) {
                 $isOnline = $var['is_online'];
             }else{
-                $isOnline = !$config['load_onlinetrack'] || (isset($var['session_viewonline']) && !$var['session_viewonline']) ? false : time() - ($config['load_online_time'] * 60) < $var['session_start'];
+                $isOnline = !$config['load_onlinetrack'] || (isset($var['session_viewonline']) && !$var['session_viewonline']) ? false : time() - ($config['load_online_time'] * 60) < $var['user_lastvisit'];
             }
             $oMbqEtUser->isOnline->setOriValue($isOnline);
 

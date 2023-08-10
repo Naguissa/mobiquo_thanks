@@ -714,6 +714,8 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 
 	if ($sql_where)
 	{
+		$zebra = [];
+
 		if ($show_results == 'posts')
 		{
 			// @todo Joining this query to the one below?
@@ -722,7 +724,6 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 				WHERE user_id = ' . $user->data['user_id'];
 			$result = $db->sql_query($sql);
 
-			$zebra = array();
 			while ($row = $db->sql_fetchrow($result))
 			{
 				$zebra[($row['friend']) ? 'friend' : 'foe'][] = $row['zebra_id'];
@@ -845,7 +846,7 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 		$result = $db->sql_query($sql);
 		$result_topic_id = 0;
 
-		$rowset = array();
+		$rowset = $attachments = $topic_tracking_info = array();
 
 		if ($show_results == 'topics')
 		{
@@ -1065,6 +1066,10 @@ if ($keywords || $author || $author_id || $search_id || $submit)
 
 			$view_topic_url_params = "f=$forum_id&amp;t=$result_topic_id" . (($u_hilit) ? "&amp;hilit=$u_hilit" : '');
 			$view_topic_url = append_sid("{$phpbb_root_path}viewtopic.$phpEx", $view_topic_url_params);
+
+			$folder_img = $folder_alt = $u_mcp_queue = '';
+			$topic_type = $posts_unapproved = 0;
+			$unread_topic = $topic_unapproved = $topic_deleted = false;
 
 			if ($show_results == 'topics')
 			{

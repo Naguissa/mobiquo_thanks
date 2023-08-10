@@ -479,7 +479,7 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
 
             if (isset($row['S_IGNORE_POST']) && $row['S_IGNORE_POST'])
             {
-                $row['MESSAGE'] =  $row['L_IGNORE_POST'] . "[spoiler]{$row[MESSAGE]}[/spoiler]";
+                $row['MESSAGE'] =  $row['L_IGNORE_POST'] . "[spoiler]{$row['MESSAGE']}[/spoiler]";
             }
 
             $can_ban_user = $auth->acl_get('m_ban') && $row['POST_AUTHOR_ID'] != $user->data['user_id'];
@@ -549,7 +549,6 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
             //$oMbqEtForumPost->position->setOriValue($row['prev_posts'] + 1);
             $oMbqEtForumPost->canThank->setOriValue(isset($row['bind']['can_thank']) && $row['bind']['can_thank']);
 			$oMbqEtForumPost->canUnthank->setOriValue(isset($row['bind']['can_unthank']) && $row['bind']['can_unthank']);
-
             //$oMbqEtForumPost->thankCount->setOriValue($row['bind']['post_author_id']);
             $oMbqEtForumPost->isThanked->setOriValue(isset($row['bind']['thanks_info']));
 
@@ -566,7 +565,10 @@ Class MbqRdEtForumPost extends MbqBaseRdEtForumPost {
             }
             $oMbqEtForumPost->canDelete->setOriValue($auth->acl_get('m_delete', $forum_id) || ($auth->acl_get('m_softdelete', $forum_id) && $row['bind']['post_visibility'] != ITEM_DELETED));
             $oMbqEtForumPost->isApproved->setOriValue(isset($row['S_POST_UNAPPROVED']) && !$row['S_POST_UNAPPROVED']);
-            $oMbqEtForumPost->canApprove->setOriValue($auth->acl_get('m_approve', $forum_id));
+            if(!$oMbqEtForumPost->isApproved->oriValue)
+            {
+                $oMbqEtForumPost->canApprove->setOriValue($auth->acl_get('m_approve', $forum_id));
+            }
             $oMbqEtForumPost->canMove->setOriValue($auth->acl_get('m_split', $forum_id));
             $oMbqEtForumPost->canReport->setOriValue($auth->acl_get('f_report', $oMbqEtForumPost->forumId->oriValue));
             //$oMbqEtForumPost->modByUserId->setOriValue($var['post_author_id']);

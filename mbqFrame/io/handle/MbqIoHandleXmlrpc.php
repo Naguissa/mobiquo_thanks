@@ -71,11 +71,14 @@ Class MbqIoHandleXmlrpc {
                     list ($category, $locale) = explode("=", $localeSetting);
                 }
                 else {
-                    $category = LC_ALL;
+                    $category = 'LC_ALL';
                     $locale   = $localeSetting;
                 }
-                setlocale(intval($category), $locale);
+                if(defined("$category")){
+                    setlocale(constant($category), $locale);
+                }
             }
+            constant('LC_ALL');
 
         }
     }
@@ -191,7 +194,8 @@ Class MbqIoHandleXmlrpc {
             'user_type',
             'options',
             'DEBUG_ERROR',
-            'text'
+            'text',
+            'post_debug_raw_content'
         );
 
         // compatibility fix, 'delete_reason' should be string in get_config, and base64 in others
