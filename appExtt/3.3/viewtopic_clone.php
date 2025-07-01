@@ -1474,14 +1474,14 @@ if (file_exists($phpbb_root_path . 'ext/naguissa/thanksforposts/core/helper.' . 
 		}
 	if (class_exists('naguissa\thanksforposts\core\helper'))
 		{
-		$thanksHelper = new naguissa\thanksforposts\core\helper($config, $db, $auth, $template, $user, $phpbb_container->get('cache')->get_driver(), $request, $phpbb_container->get('notification_manager'), $phpbb_container->get('controller.helper'), $phpbb_dispatcher, $phpbb_root_path, $phpEx, $table_prefix, $table_prefix . 'thanks', USERS_TABLE, POSTS_TABLE, NOTIFICATIONS_TABLE, TOPICS_TABLE);
+		$thanksHelper = new naguissa\thanksforposts\core\helper($config, $db, $auth, $template, $user, $phpbb_container->get('cache')->get_driver(), $request, $phpbb_container->get('notification_manager'), $phpbb_container->get('controller.helper'), $phpbb_dispatcher, $phpbb_root_path, $phpEx, $table_prefix . 'thanks', USERS_TABLE, POSTS_TABLE, NOTIFICATIONS_TABLE, TOPICS_TABLE);
 		if (isset($_REQUEST['thanks']))
 			{
 			$user->add_lang('mods/thanks_mod');
 			$_REQUEST['from_id'] = $user->data['user_id'];
 			$_REQUEST['to_id'] = $topic_data['poster_id'];
 			$config['thanks_info_page'] = 1;
-			$thanksHelper->insert_thanks(request_var('thanks', 0), $user->data['user_id']);
+			$thanksHelper->insert_thanks(request_var('thanks', 0), $user->data['user_id'], $forum_id ?? 0);
 			return trigger_error("Insert thanks");
 			}
 		$thanksHelper->array_all_thanks(array_values($post_list), $forum_id);
